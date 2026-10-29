@@ -14,9 +14,9 @@ A retro-inspired Network Attached Storage (NAS) web application featuring a Wind
 
 ## ⚠️ Development Disclaimer
 
-**This project is vibe-coded and heavily AI-assisted.** The source code was not manually written line by line by the maintainer.
+**This project is vibe coded and heavily AI assisted.** The source code was not manually written line by line by the maintainer.
 
-- AI-generated code may contain bugs, vulnerabilities, or incomplete functionality.
+- AI generated code may contain bugs, vulnerabilities, or incomplete functionality.
 - The project has not necessarily undergone comprehensive testing or professional security auditing.
 - Reliability, compatibility, and data integrity are not guaranteed.
 - Administrative features may require elevated permissions and careful security configuration.
@@ -25,11 +25,18 @@ A retro-inspired Network Attached Storage (NAS) web application featuring a Wind
 
 ## 🚀 Installation
 
-Refer to the repository's setup instructions for dependencies, configuration, permissions, and startup procedures.
+1. Open the repository's **Releases** page.
+2. Download the latest release package.
+3. Extract the downloaded archive.
+4. Open the extracted project folder.
+5. Double-click `start.bat`.
+6. Follow the on-screen instructions to complete the setup and launch the application.
+
+**Note:** Follow any additional prompts displayed by the setup process. Available features may depend on your system configuration and required permissions.
 
 ## 📄 License
 
-Refer to the repository's `LICENSE` file, if available.
+Refer to the repository's `LICENSE` file.
 
 ## ⚖️ Disclaimer
 
