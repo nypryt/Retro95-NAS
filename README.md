@@ -1,6 +1,6 @@
 # Retro95 NAS 🖥️
 
-A retro-inspired Network Attached Storage (NAS) web application featuring a Windows 95-style interface, with centralized management for files, Tailscale, and Docker.
+A retro inspired NAS web application featuring a Windows 95 style interface, with centralized management for files, Tailscale, and Docker.
 
 ## ✨ Features
 
