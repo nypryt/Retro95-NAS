@@ -5,7 +5,7 @@ A retro inspired NAS web application featuring a Windows 95 style interface, wit
 
 [![Python 3.15](https://img.shields.io/badge/Python-3.15-blue?logo=python&logoColor=white)](https://www.python.org/downloads/)
 
-⚠️ [THIS PROJECT REQUIRES PYTHON 3.15 ON THE SERVER PC] ⚠️
+⚠️ [THIS PROJECT REQUIRES PYTHON 3.15+ ON THE SERVER PC] ⚠️
 
 ## ✨ Features
 
