@@ -3,7 +3,7 @@
 A retro inspired NAS web application featuring a Windows 95 style interface, with centralized management for files, Tailscale, and Docker.
 
 
-![Python 3.15](https://img.shields.io/badge/Python-3.15-blue?logo=python&logoColor=white)
+[![Python 3.15](https://img.shields.io/badge/Python-3.15-blue?logo=python&logoColor=white)](https://www.python.org/downloads/)
 
 ⚠️ [THIS PROJECT REQUIRES PYTHON 3.15 ON THE SERVER PC] ⚠️
 
