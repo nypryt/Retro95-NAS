@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Win95 NAS</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='4' width='28' height='19' fill='%23c0c0c0' stroke='%23000'/%3E%3Crect x='5' y='7' width='22' height='13' fill='%23008080'/%3E%3Crect x='12' y='23' width='8' height='3' fill='%23808080'/%3E%3Crect x='8' y='26' width='16' height='3' fill='%23808080' stroke='%23000'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/css/win95.css">
+</head>
+<body>
+<div id="screen">
+  <div id="desktop">
+    <div id="desktop-icons"></div>
+    <div id="marquee" hidden></div>
+  </div>
+
+  <div id="windows"></div>
+
+  <div id="taskbar">
+    <button id="start-button" type="button" aria-haspopup="true">
+      <img class="start-flag" src="/icons/win95/flag-32.png" alt="" width="18" height="18" draggable="false">
+      <span class="start-text">Start</span>
+    </button>
+    <div id="task-divider"></div>
+    <div id="task-buttons"></div>
+    <div id="tray">
+      <button id="tray-crt" class="tray-btn" type="button" title="Toggle CRT effect"></button>
+      <button id="tray-sound" class="tray-btn" type="button" title="Sound on/off"></button>
+      <div id="clock" class="tray-clock" title="Clock"></div>
+    </div>
+  </div>
+
+  <div id="start-menu" class="start-menu" hidden></div>
+</div>
+
+<div id="crt-overlay" aria-hidden="true">
+  <div class="crt-scanlines"></div>
+  <div class="crt-vignette"></div>
+  <div class="crt-flicker"></div>
+</div>
+<div id="crt-bezel" aria-hidden="true"></div>
+<div id="crt-power" aria-hidden="true"></div>
+
+<div id="boot-screen" hidden>
+  <div class="boot-sky"></div>
+  <img class="boot-lockup" src="/icons/win95/boot-logo.svg" alt="Microsoft Windows 95" draggable="false">
+  <img class="boot-ms" src="/icons/win95/ms-logo.svg" alt="" aria-hidden="true" draggable="false">
+  <div class="boot-bar"></div>
+</div>
+
+<div id="screensaver" hidden>
+  <canvas id="screensaver-canvas"></canvas>
+  <div class="ss-hint">Move the mouse or press a key to return</div>
+</div>
+
+<div id="shutdown-screen" hidden>
+  <div class="shutdown-text">It&rsquo;s now safe to turn off<br>your computer.</div>
+  <button id="shutdown-restart" type="button">Restart</button>
+</div>
+
+<div id="toasts"></div>
+
+<script src="/js/icons-classic.js"></script>
+<script src="/js/icons-v2.js"></script>
+<script src="/js/icons-win95.js"></script>
+<script src="/js/icons.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/sound.js"></script>
+<script src="/js/ui.js"></script>
+<script src="/js/wm.js"></script>
+<script src="/js/settings.js"></script>
+<script src="/js/explorer.js"></script>
+<script src="/js/notepad.js"></script>
+<script src="/js/clock.js"></script>
+<script src="/js/minesweeper.js"></script>
+<script src="/js/docker.js"></script>
+<script src="/js/tailscale.js"></script>
+<script src="/js/office.js"></script>
+<script src="/js/vlc.js"></script>
+<script src="/js/apps.js"></script>
+<script src="/js/cmd.js"></script>
+<script src="/js/desktop.js"></script>
+<script src="/js/main.js"></script>
+</body>
+</html>

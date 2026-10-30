@@ -1,0 +1,22 @@
+#!/bin/sh
+# Win95 NAS - macOS launcher.
+# Copies the bundled app to Application Support on first run (so it can write
+# its data folder), then starts the normal launcher.
+set -e
+
+HERE="$(cd "$(dirname "$0")" && pwd)"
+SRC="$HERE/../Resources/app"
+DEST="$HOME/Library/Application Support/Win95NAS"
+
+if [ ! -f "$DEST/server.py" ]; then
+  mkdir -p "$DEST"
+  cp -R "$SRC/." "$DEST/"
+fi
+
+if ! command -v python3 >/dev/null 2>&1; then
+  osascript -e 'display alert "Win95 NAS needs Python 3.11 or newer" message "Install Python from python.org, then open Win95 NAS again."' >/dev/null 2>&1 || true
+  exit 1
+fi
+
+cd "$DEST"
+exec python3 launcher.py

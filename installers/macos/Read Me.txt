@@ -1,0 +1,20 @@
+Win95 NAS 1.0
+=============
+
+A Windows 95-styled network drive that lives on your own Mac.
+
+Install
+-------
+1. Drag "Win95 NAS.app" into the Applications folder.
+2. Open it. The first run copies the app to
+   ~/Library/Application Support/Win95NAS and asks where your files
+   should be stored.
+3. The desktop opens at http://localhost:4040.
+
+Requirements
+------------
+* macOS 10.13 or newer
+* Python 3.11 or newer (python.org build recommended)
+
+The app stores its settings in ~/Library/Application Support/Win95NAS/data
+and your files in the folder you choose during setup. Nothing leaves the Mac.
