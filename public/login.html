@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Log On - Win95 NAS</title>
+<link rel="stylesheet" href="/css/win95.css">
+<style>
+  html, body {
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    background: #000;
+  }
+  body {
+    font-family: var(--font);
+    font-size: 11px;
+    color: #000;
+    cursor: default;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  #login-screen {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #008080;
+    background-image:
+      radial-gradient(circle at 50% 0%, rgba(255,255,255,.12), transparent 62%),
+      linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.22));
+    overflow: auto;
+    padding: 14px;
+  }
+  #login-screen::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(rgba(255,255,255,.028) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.028) 1px, transparent 1px);
+    background-size: 4px 4px;
+  }
+  .login-win {
+    position: relative;
+    width: 468px;
+    max-width: calc(100vw - 20px);
+    z-index: 2;
+    animation: logon-in .22s ease-out;
+  }
+  @keyframes logon-in {
+    from { transform: translateY(8px) scale(.985); opacity: .3; }
+    to   { transform: none; opacity: 1; }
+  }
+  .login-win .titlebar { cursor: default; }
+  .login-win .win-body { padding: 0; }
+  .login-inner { padding: 12px 12px 8px; }
+
+  .login-head {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 4px 2px 10px;
+  }
+  .login-logo {
+    flex: 0 0 56px;
+    width: 56px;
+    height: 56px;
+    filter: drop-shadow(1px 1px 0 #808080);
+  }
+  .login-logo svg { width: 56px; height: 56px; display: block; }
+  .login-title {
+    font-family: "Times New Roman", Georgia, serif;
+    font-size: 21px;
+    line-height: 1.05;
+    letter-spacing: .2px;
+  }
+  .login-title i { font-style: italic; }
+  .login-sub {
+    margin-top: 4px;
+    line-height: 1.45;
+    max-width: 330px;
+  }
+  .login-badge {
+    display: inline-block;
+    margin-top: 6px;
+    padding: 1px 5px;
+    background: #ffffe1;
+    border: 1px solid #808080;
+    color: #404040;
+    font-size: 10px;
+  }
+
+  .login-form {
+    display: grid;
+    grid-template-columns: 100px 1fr;
+    gap: 6px 8px;
+    align-items: center;
+    padding: 10px 2px 4px;
+  }
+  .login-form label { text-align: right; }
+  .login-form input[type="text"],
+  .login-form input[type="password"] {
+    width: 100%;
+    height: 21px;
+  }
+  .login-form .field-note {
+    grid-column: 2;
+    color: #404040;
+    font-size: 10px;
+    margin-top: -2px;
+  }
+
+  .login-error {
+    display: flex;
+    gap: 6px;
+    align-items: flex-start;
+    margin: 8px 2px 0;
+    padding: 5px 6px;
+    background: #ffffe1;
+    border: 1px solid #000;
+    box-shadow: inset 1px 1px #808080, inset -1px -1px #fff;
+    line-height: 1.4;
+  }
+  .login-error.shake { animation: shake .28s linear; }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    50% { transform: translateX(4px); }
+    75% { transform: translateX(-2px); }
+  }
+  .err-ico {
+    flex: 0 0 16px;
+    width: 16px;
+    height: 16px;
+    margin-top: 1px;
+    background: #c00000;
+    color: #fff;
+    font-weight: bold;
+    text-align: center;
+    line-height: 16px;
+    font-size: 11px;
+    box-shadow: inset -1px -1px #600, inset 1px 1px #ff8080;
+  }
+  .caps-warn {
+    margin: 5px 2px 0;
+    color: #800000;
+    font-weight: bold;
+  }
+
+  .login-note {
+    margin: 8px 2px 0;
+    padding: 6px 7px;
+    background: #ffffe1;
+    border: 1px solid #808080;
+    line-height: 1.45;
+  }
+  .login-note code {
+    font-family: var(--mono);
+    background: #fff;
+    border: 1px solid #c0c0c0;
+    padding: 0 2px;
+  }
+
+  .login-help {
+    margin: 8px 2px 0;
+    padding: 7px;
+    background: #fff;
+    border: 1px solid #000;
+    box-shadow: inset 1px 1px #808080, inset -1px -1px #dfdfdf;
+    line-height: 1.5;
+    max-height: 112px;
+    overflow: auto;
+  }
+  .login-help b { color: #000080; }
+
+  .login-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 2px 2px;
+  }
+  .login-actions .grow { flex: 1 1 auto; }
+  .login-actions button { min-width: 74px; }
+
+  .login-foot {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 9px;
+    padding: 4px 2px 0;
+    border-top: 1px solid #808080;
+    box-shadow: 0 -1px 0 #fff inset;
+    color: #404040;
+    font-size: 10px;
+  }
+
+  #shutdown {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #c87800;
+    color: #000;
+    text-align: center;
+  }
+  #shutdown .shutdown-inner { max-width: 520px; padding: 20px; }
+  #shutdown .shutdown-title {
+    font-family: "Times New Roman", Georgia, serif;
+    font-size: 30px;
+    line-height: 1.25;
+    letter-spacing: .3px;
+    text-shadow: 1px 1px 0 rgba(255,255,255,.35);
+  }
+  #shutdown .shutdown-sub { margin-top: 14px; font-size: 11px; }
+  #shutdown button { margin-top: 22px; min-width: 110px; }
+  @media (max-width: 520px) {
+    .login-form { grid-template-columns: 1fr; }
+    .login-form label { text-align: left; }
+    .login-form .field-note { grid-column: 1; }
+  }
+</style>
+</head>
+<body>
+  <div id="login-screen">
+    <div class="win login-win" id="login-win">
+      <div class="titlebar">
+        <span class="tb-icon" id="title-icon"></span>
+        <span class="tb-title" id="title-text">Welcome to Windows 95</span>
+        <span class="tb-buttons">
+          <button type="button" class="tb-btn" id="help-tb" title="Help" aria-label="Help">?</button>
+          <button type="button" class="tb-btn close" id="close-tb" title="Shut down" aria-label="Shut down"></button>
+        </span>
+      </div>
+      <div class="win-body">
+        <div class="login-inner">
+          <div class="login-head">
+            <div class="login-logo" id="login-logo"></div>
+            <div>
+              <div class="login-title" id="login-heading">Welcome to Windows <i>95</i> NAS</div>
+              <div class="login-sub" id="login-sub">Type a user name and password to log on to your network drive.</div>
+              <div class="login-badge" id="login-badge">Local account &middot; stored on this PC</div>
+            </div>
+          </div>
+
+          <div class="login-form" id="login-form">
+            <label for="username">User name:</label>
+            <input id="username" type="text" autocomplete="username" spellcheck="false" maxlength="32" placeholder="e.g. Admin">
+            <label for="password">Password:</label>
+            <input id="password" type="password" autocomplete="current-password" maxlength="200">
+            <div id="confirm-row" hidden style="display: contents;">
+              <label for="confirm">Confirm password:</label>
+              <input id="confirm" type="password" autocomplete="new-password" maxlength="200">
+            </div>
+            <div class="field-note" id="field-note" hidden>At least 4 characters. You can change it later in Control Panel.</div>
+          </div>
+
+          <div class="login-error" id="login-error" hidden>
+            <span class="err-ico">!</span>
+            <span id="login-error-text"></span>
+          </div>
+          <div class="caps-warn" id="caps-warn" hidden>Caps Lock is on.</div>
+
+          <div class="login-note" id="setup-note" hidden>
+            This is the first time Win95 NAS has started on this PC. Choose the user name and password you want to use.
+            They are saved locally in <code>data\users.json</code> &mdash; no cloud, no email, no nonsense.
+          </div>
+
+          <div class="login-help" id="help-box" hidden>
+            <b>Accounts</b><br>
+            The first account created here is the administrator. Open
+            <b>Control Panel &rarr; Users</b> after signing in to add more people, change your password or remove accounts.<br><br>
+            <b>Forgot your password?</b><br>
+            Stop the server, delete <code>data\users.json</code>, and start it again. You will be asked to create the first account.
+            Anyone who can open that file on this PC can reset it, so keep the PC itself safe.<br><br>
+            <b>Good to know</b><br>
+            Sessions last 7 days. Closing the browser does not sign you out. Use
+            <b>Start &rarr; Log Off</b> when you are done.
+          </div>
+
+          <div class="login-actions">
+            <button type="button" id="help-btn">Help</button>
+            <span class="grow"></span>
+            <button type="button" id="ok-btn" class="default">OK</button>
+            <button type="button" id="cancel-btn">Cancel</button>
+          </div>
+
+          <div class="login-foot">
+            <span id="login-clock">&nbsp;</span>
+            <span>Win95 NAS 1.0 &middot; your files stay on this PC</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="shutdown" hidden>
+    <div class="shutdown-inner">
+      <div class="shutdown-title">It&rsquo;s now safe to turn off<br>your computer.</div>
+      <div class="shutdown-sub">Win95 NAS has been signed out of this browser.</div>
+      <button type="button" id="restart-btn">Restart</button>
+    </div>
+  </div>
+
+  <script src="/js/icons-classic.js"></script>
+  <script src="/js/icons-v2.js"></script>
+  <script src="/js/icons-win95.js"></script>
+  <script src="/js/icons.js"></script>
+  <script>
+  (function () {
+    "use strict";
+
+    const $ = (id) => document.getElementById(id);
+    const els = {
+      screen: $("login-screen"),
+      win: $("login-win"),
+      titleIcon: $("title-icon"),
+      titleText: $("title-text"),
+      logo: $("login-logo"),
+      heading: $("login-heading"),
+      sub: $("login-sub"),
+      badge: $("login-badge"),
+      username: $("username"),
+      password: $("password"),
+      confirm: $("confirm"),
+      confirmRow: $("confirm-row"),
+      fieldNote: $("field-note"),
+      error: $("login-error"),
+      errorText: $("login-error-text"),
+      caps: $("caps-warn"),
+      setupNote: $("setup-note"),
+      helpBox: $("help-box"),
+      ok: $("ok-btn"),
+      cancel: $("cancel-btn"),
+      help: $("help-btn"),
+      helpTb: $("help-tb"),
+      closeTb: $("close-tb"),
+      clock: $("login-clock"),
+      shutdown: $("shutdown"),
+      restart: $("restart-btn"),
+    };
+
+    const params = new URLSearchParams(location.search);
+    let next = params.get("next") || "/";
+    if (!next.startsWith("/") || next.startsWith("//")) next = "/";
+
+    let mode = "login";
+    let busy = false;
+
+    els.titleIcon.innerHTML = Icons.get("keys", 16);
+    els.logo.innerHTML = Icons.windowsLogo;
+
+    function setMode(nextMode) {
+      mode = nextMode;
+      const setup = mode === "setup";
+      els.titleText.textContent = setup ? "Set Up Windows 95 NAS" : "Welcome to Windows 95";
+      els.heading.innerHTML = setup ? "Create your <i>account</i>" : "Welcome to Windows <i>95</i> NAS";
+      els.sub.textContent = setup
+        ? "This PC has no accounts yet. Choose a user name and password to get started."
+        : "Type your user name and password to log on to your network drive.";
+      els.badge.textContent = setup ? "First run \u00B7 administrator account" : "Local account \u00B7 stored on this PC";
+      els.confirmRow.hidden = !setup;
+      els.fieldNote.hidden = !setup;
+      els.setupNote.hidden = !setup;
+      els.ok.textContent = setup ? "Create account" : "OK";
+      els.password.setAttribute("autocomplete", setup ? "new-password" : "current-password");
+      if (setup) {
+        els.username.placeholder = "e.g. Admin";
+        els.username.focus();
+      } else {
+        els.username.placeholder = "";
+        els.password.focus();
+      }
+    }
+
+    function showError(message, focusPassword) {
+      els.errorText.textContent = message;
+      els.error.hidden = false;
+      els.error.classList.remove("shake");
+      void els.error.offsetWidth;
+      els.error.classList.add("shake");
+      if (focusPassword) {
+        els.password.focus();
+        els.password.select();
+      }
+    }
+
+    function clearError() {
+      els.error.hidden = true;
+      els.errorText.textContent = "";
+    }
+
+    function setBusy(value) {
+      busy = value;
+      els.ok.disabled = value;
+      els.username.disabled = value;
+      els.password.disabled = value;
+      els.confirm.disabled = value;
+      els.ok.textContent = value
+        ? (mode === "setup" ? "Creating..." : "Signing in...")
+        : (mode === "setup" ? "Create account" : "OK");
+    }
+
+    async function post(url, body) {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        cache: "no-store",
+      });
+      let data = {};
+      try { data = await response.json(); } catch (_err) { data = {}; }
+      if (!response.ok) {
+        const error = new Error(data.error || ("Request failed (" + response.status + ")"));
+        error.status = response.status;
+        throw error;
+      }
+      return data;
+    }
+
+    async function submit() {
+      if (busy) return;
+      clearError();
+      const username = els.username.value.trim();
+      const password = els.password.value;
+      if (!username) { showError("Type your user name.", false); els.username.focus(); return; }
+      if (!password) { showError("Type your password.", true); return; }
+      if (mode === "setup") {
+        if (password.length < 4) { showError("Use a password with at least 4 characters.", true); return; }
+        if (password !== els.confirm.value) { showError("The two passwords do not match.", true); return; }
+      }
+      setBusy(true);
+      try {
+        const endpoint = mode === "setup" ? "/api/auth/register" : "/api/auth/login";
+        await post(endpoint, { username, password });
+        els.ok.textContent = "Starting Windows...";
+        window.location.replace(next);
+      } catch (err) {
+        setBusy(false);
+        showError(err.message || "Could not sign in.", true);
+      }
+    }
+
+    function showShutdown() {
+      els.shutdown.hidden = false;
+      if (window.Sound) Sound.play("shutdown");
+    }
+
+    function toggleHelp() {
+      els.helpBox.hidden = !els.helpBox.hidden;
+      if (!els.helpBox.hidden) els.helpBox.scrollTop = 0;
+    }
+
+    els.ok.addEventListener("click", submit);
+    els.cancel.addEventListener("click", showShutdown);
+    els.closeTb.addEventListener("click", showShutdown);
+    els.restart.addEventListener("click", () => window.location.reload());
+    els.help.addEventListener("click", toggleHelp);
+    els.helpTb.addEventListener("click", toggleHelp);
+
+    els.win.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        submit();
+      } else if (event.key === "Escape") {
+        event.preventDefault();
+        showShutdown();
+      }
+    });
+
+    function updateCaps(event) {
+      if (!event.getModifierState) return;
+      els.caps.hidden = !event.getModifierState("CapsLock");
+    }
+    document.addEventListener("keydown", updateCaps);
+    document.addEventListener("keyup", updateCaps);
+
+    function tickClock() {
+      const now = new Date();
+      els.clock.textContent = now.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" })
+        + "  \u00B7  " + now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    }
+    tickClock();
+    setInterval(tickClock, 5000);
+
+    (async function init() {
+      try {
+        const response = await fetch("/api/auth/status", { cache: "no-store" });
+        const data = await response.json();
+        if (data.authenticated) {
+          window.location.replace(next);
+          return;
+        }
+        setMode(data.needsSetup ? "setup" : "login");
+        if (!data.needsSetup && data.userCount) {
+          els.badge.textContent = data.userCount + (data.userCount === 1 ? " account" : " accounts") + " on this PC";
+        }
+      } catch (err) {
+        setMode("login");
+        showError("Cannot reach the Win95 NAS server. Is it still running?", false);
+      }
+      setTimeout(() => {
+        if (mode === "setup") els.username.focus();
+        else els.username.focus();
+      }, 120);
+    })();
+  })();
+  </script>
+</body>
+</html>
