@@ -1,7 +1,10 @@
 # Retro95 NAS 🖥️
 
 A retro inspired NAS web application featuring a Windows 95 style interface, with centralized management for files, Tailscale, and Docker.
-![PyPI Version](https://shields.io)
+
+
+![Python 3.15](https://img.shields.io/badge/Python-3.15-blue?logo=python&logoColor=white)
+
 ⚠️## [THIS PROJECT REQUIRES PYTHON 3.15] ⚠️
 
 ## ✨ Features
