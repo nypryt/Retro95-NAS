@@ -14,6 +14,7 @@
     if (item.type === "dir") { Explorer.open(item.path); return; }
     if (item.kind === "text" || item.kind === "code") { Apps.notepad(item.path); return; }
     if (item.kind === "audio" || item.kind === "video") { VLC.open(item); return; }
+    if (item.kind === "archive") { WinRAR.open(item.path); return; }
     if (item.kind === "word" || item.kind === "excel" || item.kind === "powerpoint") { Office.open(item); return; }
     if (["image", "pdf"].includes(item.kind)) { Apps.viewer(item); return; }
     Apps.properties(item.path);
@@ -531,6 +532,12 @@
     const commands = {
       notepad: () => Apps.notepad(),
       "notepad.exe": () => Apps.notepad(),
+      paint: () => Apps.paint(),
+      "paint.exe": () => Apps.paint(),
+      mspaint: () => Apps.paint(),
+      "mspaint.exe": () => Apps.paint(),
+      pbrush: () => Apps.paint(),
+      "pbrush.exe": () => Apps.paint(),
       clock: () => Apps.clock(),
       "clock.exe": () => Apps.clock(),
       time: () => Apps.clock(),
@@ -541,6 +548,10 @@
       "docker.exe": () => Docker.open(),
       tailscale: () => Tailscale.open(),
       "tailscale.exe": () => Tailscale.open(),
+      winrar: () => WinRAR.pick(),
+      "winrar.exe": () => WinRAR.pick(),
+      archive: () => WinRAR.pick(),
+      zip: () => WinRAR.pick(),
       minesweeper: () => Apps.minesweeper("beginner"),
       "winmine.exe": () => Apps.minesweeper("beginner"),
       find: () => Apps.find(),

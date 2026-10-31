@@ -5,8 +5,8 @@ set "DEST=%WIN95NAS_INSTALL_DIR%"
 if not defined DEST set "DEST=%LOCALAPPDATA%\Programs\Win95NAS"
 
 echo.
-echo   Win95 NAS Setup
-echo   ---------------
+echo   Retro95 Setup
+echo   -------------
 echo   Installing to "%DEST%"
 echo.
 

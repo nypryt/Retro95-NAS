@@ -520,6 +520,51 @@
     rect(g, 13, 12, 6, 3, "k"); rect(g, 14, 13, 4, 1, "d");
     return g;
   })();
+  ICONS.paint = (() => {
+    const g = grid();
+    // Wooden artist's palette with dabs of paint and a thumb hole.
+    rect(g, 3, 12, 18, 14, "k");
+    rect(g, 4, 13, 16, 12, "s");
+    rect(g, 4, 13, 16, 3, "#e8c8a0");
+    rect(g, 8, 18, 5, 4, "k");
+    rect(g, 5, 15, 2, 2, "r");
+    rect(g, 9, 14, 2, 2, "G");
+    rect(g, 13, 15, 2, 2, "b");
+    rect(g, 6, 20, 2, 2, "y");
+    rect(g, 12, 20, 2, 2, "p");
+    rect(g, 15, 18, 2, 2, "o");
+    // Brush crossing the palette.
+    for (let i = 0; i < 11; i += 1) {
+      put(g, 20 + i, 3 + i, "k");
+      put(g, 21 + i, 3 + i, "O");
+    }
+    rect(g, 17, 12, 6, 4, "k");
+    rect(g, 18, 13, 4, 2, "q");
+    rect(g, 14, 16, 6, 5, "k");
+    rect(g, 15, 17, 4, 3, "Y");
+    return g;
+  })();
+  ICONS.winrar = (() => {
+    const g = grid();
+    // Metal clamp holding the stack together.
+    rect(g, 2, 3, 5, 26, "k");
+    rect(g, 3, 4, 3, 24, "d");
+    rect(g, 3, 4, 1, 24, "q");
+    rect(g, 2, 2, 5, 3, "k");
+    rect(g, 3, 3, 3, 1, "q");
+    rect(g, 2, 27, 5, 3, "k");
+    rect(g, 3, 28, 3, 1, "q");
+    // Three books: red, green, blue, with white page blocks.
+    [[5, "R", "r"], [12, "G", "n"], [19, "b", "l"]].forEach(([y, dark, light]) => {
+      rect(g, 6, y, 23, 6, "k");
+      rect(g, 7, y + 1, 15, 4, dark);
+      hline(g, 7, y + 1, 15, light);
+      rect(g, 22, y + 1, 5, 4, "w");
+      hline(g, 23, y + 2, 4, "z");
+      hline(g, 23, y + 3, 4, "z");
+    });
+    return g;
+  })();
   ICONS.chip = (() => {
     const g = grid();
     rect(g, 8, 8, 16, 16, "k");

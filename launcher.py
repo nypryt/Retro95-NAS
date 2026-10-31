@@ -17,6 +17,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import terms
+
 BASE_DIR = Path(__file__).resolve().parent
 SETUP_FILE = BASE_DIR / "data" / "setup.json"
 DEFAULT_ROOT = BASE_DIR / "nas-data"
@@ -51,6 +53,24 @@ def _show_console(visible: bool) -> None:
         pass
 
 
+def _console_terms() -> bool:
+    """Print the terms and require an explicit acceptance."""
+    print()
+    print("  " + "=" * 62)
+    print("   Terms and Conditions - version %s" % terms.TERMS_VERSION)
+    print("  " + "=" * 62)
+    for line in terms.plain().splitlines():
+        print(("  " + line).rstrip())
+    print()
+    print("  Type I AGREE to accept these terms.")
+    print("  Press Enter without typing anything to cancel setup.")
+    try:
+        answer = input("  > ").strip()
+    except EOFError:
+        return False
+    return answer.lower().replace(" ", "") in ("iagree", "agree", "yes", "y")
+
+
 def console_setup() -> int:
     """Fallback wizard for machines without Tkinter."""
     import setup_gui
@@ -61,6 +81,10 @@ def console_setup() -> int:
     print("  ============================================")
     print("  The graphical wizard is unavailable, so here")
     print("  are the same questions in the console.")
+    if not _console_terms():
+        print()
+        print("  Terms not accepted. Setup cancelled.")
+        return 1
     print()
     root = input("  NAS storage folder [%s]: " % DEFAULT_ROOT).strip()
     root = root or str(DEFAULT_ROOT)
@@ -75,6 +99,7 @@ def console_setup() -> int:
             tray=tray not in ("n", "no"),
             open_browser=browser not in ("n", "no"),
             limit_gb=float(limit),
+            terms_accepted=True,
         )
     except Exception as exc:
         print("  Setup failed: %s" % exc)
@@ -105,6 +130,8 @@ def main(argv=None) -> int:
     args = list(sys.argv[1:] if argv is None else argv)
     force_setup = "--setup" in args
     args = [arg for arg in args if arg != "--setup"]
+    accept_terms = "--accept-terms" in args
+    args = [arg for arg in args if arg != "--accept-terms"]
 
     def prepare_setup() -> int:
         code = run_setup()
@@ -132,6 +159,23 @@ def main(argv=None) -> int:
         if status:
             return 0 if status == 2 else 1
         config = load_config()
+    # Installations made before the terms existed, or ones whose terms changed,
+    # have to accept them before the server starts.
+    if config and not env_root and not terms.is_accepted(config):
+        if accept_terms:
+            config.update(terms.acceptance())
+            tmp = SETUP_FILE.with_suffix(".json.tmp")
+            tmp.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
+            os.replace(tmp, SETUP_FILE)
+            print("  Terms and Conditions accepted (version %s)." % terms.TERMS_VERSION)
+        else:
+            print()
+            print("  The Terms and Conditions have not been accepted yet.")
+            print("  Opening the setup wizard so you can read and accept them.")
+            status = prepare_setup()
+            if status:
+                return 0 if status == 2 else 1
+            config = load_config()
     root = env_root or str(config.get("root") or DEFAULT_ROOT)
     try:
         root_path = Path(root).expanduser().resolve()

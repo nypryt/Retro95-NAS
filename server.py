@@ -15,10 +15,13 @@ Run:  python server.py            (http://localhost:4040)
 from __future__ import annotations
 
 import base64
+import bz2
+import gzip
 import hashlib
 import hmac
 import io
 import json
+import lzma
 import mimetypes
 import os
 import re
@@ -28,6 +31,7 @@ import socket
 import struct
 import subprocess
 import sys
+import tarfile
 import tempfile
 import threading
 import time
@@ -394,7 +398,8 @@ TEXT_EXT = {".txt", ".md", ".log", ".json", ".js", ".ts", ".css", ".html", ".htm
             ".yaml", ".xml", ".csv", ".c", ".h", ".cpp", ".java", ".rs", ".go", ".sql"}
 AUDIO_EXT = {".mp3", ".wav", ".ogg", ".flac", ".m4a", ".aac", ".wma"}
 VIDEO_EXT = {".mp4", ".webm", ".mkv", ".mov", ".avi", ".m4v"}
-ARCHIVE_EXT = {".zip", ".rar", ".7z", ".tar", ".gz", ".bz2", ".xz", ".iso"}
+ARCHIVE_EXT = {".zip", ".zipx", ".rar", ".7z", ".tar", ".gz", ".tgz", ".bz2",
+               ".tbz2", ".xz", ".txz", ".iso"}
 WORD_EXT = {".doc", ".docx", ".docm", ".rtf"}
 EXCEL_EXT = {".xls", ".xlsx", ".xlsm"}
 POWERPOINT_EXT = {".ppt", ".pptx", ".pptm", ".pps", ".ppsx"}
@@ -1922,6 +1927,637 @@ def api_download(h, q):
         raise
 
 
+# ---------------------------------------------------------------------------
+# Archive manager (WinRAR-style)
+# ---------------------------------------------------------------------------
+
+ARCHIVE_LOCK = threading.Lock()
+
+ARCHIVE_WRITE_FORMATS = {
+    "zip": ".zip",
+    "tar": ".tar",
+    "tar.gz": ".tar.gz",
+    "tgz": ".tgz",
+    "tar.bz2": ".tar.bz2",
+    "tbz2": ".tbz2",
+    "tar.xz": ".tar.xz",
+    "txz": ".txz",
+}
+
+TAR_WRITE_MODES = {
+    "tar": "w",
+    "tar.gz": "w:gz",
+    "tgz": "w:gz",
+    "tar.bz2": "w:bz2",
+    "tbz2": "w:bz2",
+    "tar.xz": "w:xz",
+    "txz": "w:xz",
+}
+
+SINGLE_FORMATS = {"gz": "gzip", "bz2": "bzip2", "xz": "xz"}
+EXTERNAL_FORMATS = {"rar": "RAR", "7z": "7-Zip", "iso": "ISO"}
+
+ARCHIVE_SUFFIXES = (
+    ".tar.gz", ".tar.bz2", ".tar.xz", ".tgz", ".tbz2", ".txz",
+    ".tar", ".zip", ".zipx", ".gz", ".bz2", ".xz", ".rar", ".7z", ".iso",
+)
+
+
+def archive_format(path: Path) -> str:
+    """'zip', 'tar.gz', 'gz', 'rar'... for a file name, or '' if unknown."""
+    name = path.name.lower()
+    for suffix in ARCHIVE_SUFFIXES:
+        if name.endswith(suffix):
+            return suffix[1:]
+    return ""
+
+
+def _strip_archive_suffix(name: str) -> str:
+    low = name.lower()
+    for suffix in ARCHIVE_SUFFIXES:
+        if low.endswith(suffix):
+            return name[: len(name) - len(suffix)] or name
+    return name
+
+
+def _require_archive(path: Path) -> str:
+    if not path.exists():
+        raise ApiError("Archive not found", 404)
+    if not path.is_file():
+        raise ApiError("That is a folder, not an archive", 400)
+    fmt = archive_format(path)
+    if not fmt:
+        raise ApiError(f"\u201c{path.name}\u201d is not a supported archive.", 415)
+    if fmt in EXTERNAL_FORMATS:
+        raise ApiError(
+            f"{path.name} is a {EXTERNAL_FORMATS[fmt]} archive. Win95 NAS opens "
+            "ZIP, TAR, TAR.GZ, TAR.BZ2, TAR.XZ, GZ, BZ2 and XZ archives. "
+            f"Convert it with {EXTERNAL_FORMATS[fmt]} first.",
+            415,
+        )
+    return fmt
+
+
+def _safe_member(name: str):
+    """Normalise an archive entry name; None when it would escape the folder."""
+    text = (name or "").replace("\\", "/").split("\x00")[0]
+    parts = []
+    for part in text.split("/"):
+        if part in ("", "."):
+            continue
+        if part == "..":
+            return None
+        if len(part) >= 2 and part[1] == ":":
+            return None
+        parts.append(part)
+    return "/".join(parts) or None
+
+
+def _inside(base: Path, target: Path) -> bool:
+    try:
+        return target.resolve().is_relative_to(base.resolve())
+    except (OSError, ValueError):
+        return False
+
+
+def _zip_mtime(info: zipfile.ZipInfo) -> int:
+    try:
+        return int(time.mktime(tuple(info.date_time) + (0, 0, -1)) * 1000)
+    except (OverflowError, ValueError, TypeError):
+        return 0
+
+
+def _walk_source(source: Path):
+    """Yield (disk path, archive name) for a file or folder, links skipped."""
+    if source.is_file():
+        yield source, source.name
+        return
+    base = source.name
+    for root, dirs, files in os.walk(source):
+        root_path = Path(root)
+        dirs[:] = [d for d in dirs if not (root_path / d).is_symlink()]
+        rel_root = root_path.relative_to(source)
+        for name in files:
+            item = root_path / name
+            if item.is_symlink():
+                continue
+            rel = name if str(rel_root) == "." else f"{rel_root.as_posix()}/{name}"
+            yield item, f"{base}/{rel}"
+
+
+def _tree_size(path: Path) -> int:
+    if path.is_file():
+        try:
+            return path.stat().st_size
+        except OSError:
+            return 0
+    total = 0
+    for root, _dirs, files in os.walk(path):
+        for name in files:
+            try:
+                total += (Path(root) / name).stat().st_size
+            except OSError:
+                pass
+    return total
+
+
+def _copy_limited(src, dst, limit=None) -> int:
+    written = 0
+    while True:
+        chunk = src.read(1 << 20)
+        if not chunk:
+            break
+        written += len(chunk)
+        if limit is not None and written > limit:
+            raise ApiError("An archive entry is larger than its header says", 400)
+        dst.write(chunk)
+    return written
+
+
+def _zip_entries(target: Path) -> list[dict]:
+    entries = []
+    with zipfile.ZipFile(target, "r") as zf:
+        for info in zf.infolist():
+            entries.append({
+                "name": info.filename,
+                "size": info.file_size,
+                "compressed": info.compress_size,
+                "mtime": _zip_mtime(info),
+                "dir": info.is_dir(),
+                "crc": "%08X" % (info.CRC & 0xFFFFFFFF),
+                "encrypted": bool(info.flag_bits & 0x1),
+            })
+    return entries
+
+
+def _tar_entries(target: Path) -> list[dict]:
+    entries = []
+    with tarfile.open(target, "r:*") as tf:
+        for member in tf.getmembers():
+            entries.append({
+                "name": member.name,
+                "size": member.size,
+                "compressed": 0,
+                "mtime": int(member.mtime * 1000) if member.mtime else 0,
+                "dir": member.isdir(),
+                "crc": "",
+                "encrypted": False,
+            })
+    return entries
+
+
+def _single_size(target: Path, fmt: str) -> int:
+    """Uncompressed size of a .gz/.bz2/.xz, or -1 when it is too big to scan."""
+    if target.stat().st_size > 64 * 1024 * 1024:
+        return -1
+    opener = {"gz": gzip.open, "bz2": bz2.open, "xz": lzma.open}[fmt]
+    total = 0
+    try:
+        with opener(target, "rb") as fh:
+            while True:
+                chunk = fh.read(1 << 20)
+                if not chunk:
+                    break
+                total += len(chunk)
+    except (OSError, EOFError) as exc:
+        raise ApiError(f"Cannot read {target.name}: {exc}", 400)
+    return total
+
+
+def api_archive_list(h, q):
+    target = safe_path(qv(q, "path", ""))
+    fmt = _require_archive(target)
+    encrypted = False
+    if fmt == "zip":
+        entries = _zip_entries(target)
+        encrypted = any(entry["encrypted"] for entry in entries)
+    elif fmt in TAR_WRITE_MODES:
+        entries = _tar_entries(target)
+    else:
+        size = _single_size(target, fmt)
+        entries = [{
+            "name": _strip_archive_suffix(target.name),
+            "size": size,
+            "compressed": target.stat().st_size,
+            "mtime": int(target.stat().st_mtime * 1000),
+            "dir": False,
+            "crc": "",
+            "encrypted": False,
+        }]
+    total = sum(max(0, entry["size"]) for entry in entries if not entry["dir"])
+    return {
+        "path": rel_of(target),
+        "name": target.name,
+        "format": fmt,
+        "entries": entries,
+        "count": len(entries),
+        "totalSize": total,
+        "compressedSize": target.stat().st_size,
+        "encrypted": encrypted,
+    }
+
+
+def _create_format(raw: str, name: str) -> str:
+    fmt = (raw or "").strip().lower().lstrip(".")
+    if not fmt and name:
+        fmt = archive_format(Path(name))
+    if fmt == "zipx":
+        fmt = "zip"
+    if fmt not in ARCHIVE_WRITE_FORMATS:
+        raise ApiError("Choose ZIP, TAR, TAR.GZ, TAR.BZ2 or TAR.XZ.", 400)
+    return fmt
+
+
+def api_archive_create(h, q):
+    body = h.read_json()
+    rels = [str(r) for r in (body.get("paths") or []) if str(r).strip()]
+    if not rels:
+        raise ApiError("Choose at least one file or folder to compress.", 400)
+    sources = [safe_path(r) for r in rels]
+    for source in sources:
+        if source == NAS_ROOT:
+            raise ApiError("Choose files or folders inside the NAS, not the whole drive.", 400)
+        if not source.exists():
+            raise ApiError(f"\u201c{source.name}\u201d was not found.", 404)
+
+    dest = safe_path(body.get("dest") or "/")
+    if not dest.is_dir():
+        raise ApiError("Destination folder not found", 404)
+
+    fmt = _create_format(body.get("format") or "", body.get("name") or "")
+    name = sanitize_name(body.get("name") or "", is_dir=False)
+    if not name or name == "untitled":
+        name = sources[0].name if len(sources) == 1 else "Archive"
+    low = name.lower()
+    for suffix in ARCHIVE_SUFFIXES:
+        if low.endswith(suffix):
+            name = name[: -len(suffix)]
+            break
+    name = (name or "Archive") + ARCHIVE_WRITE_FORMATS[fmt]
+    target = unique_path(dest, name)
+
+    total = sum(_tree_size(source) for source in sources)
+    ensure_storage(total)
+
+    level = int(body.get("level") if body.get("level") is not None else 6)
+    level = max(0, min(9, level))
+
+    TMP_DIR.mkdir(parents=True, exist_ok=True)
+    tmp = TMP_DIR / f"arc_{secrets.token_hex(8)}{ARCHIVE_WRITE_FORMATS[fmt]}"
+    try:
+        with ARCHIVE_LOCK:
+            if fmt == "zip":
+                method = zipfile.ZIP_STORED if level == 0 else zipfile.ZIP_DEFLATED
+                with zipfile.ZipFile(tmp, "w", method, allowZip64=True,
+                                     compresslevel=None if level == 0 else level) as zf:
+                    for source in sources:
+                        for path, arc in _walk_source(source):
+                            zf.write(path, arc)
+            else:
+                mode = TAR_WRITE_MODES[fmt]
+                with tarfile.open(tmp, mode) as tf:
+                    for source in sources:
+                        for path, arc in _walk_source(source):
+                            tf.add(path, arcname=arc, recursive=False)
+        shutil.move(str(tmp), str(target))
+    finally:
+        tmp.unlink(missing_ok=True)
+    return {"ok": True, "entry": describe(target), "format": fmt,
+            "count": 0, "totalSize": total}
+
+
+def _extract_dest(target: Path, fmt: str, dest_rel: str):
+    base = _strip_archive_suffix(target.name)
+    if fmt in SINGLE_FORMATS:
+        if dest_rel:
+            return safe_path(dest_rel), base
+        return target.parent, base
+    if dest_rel:
+        return safe_path(dest_rel), None
+    return target.parent / base, None
+
+
+def api_archive_extract(h, q):
+    body = h.read_json()
+    target = safe_path(body.get("path") or "")
+    fmt = _require_archive(target)
+
+    wanted = None
+    raw_members = [str(m) for m in (body.get("members") or []) if str(m).strip()]
+    if raw_members:
+        wanted = set()
+        for member in raw_members:
+            safe = _safe_member(member)
+            if safe:
+                wanted.add(safe)
+        if not wanted:
+            raise ApiError("No valid archive entries were selected.", 400)
+
+    overwrite = bool(body.get("overwrite"))
+    dest, single_name = _extract_dest(target, fmt, (body.get("dest") or "").strip())
+
+    if dest.exists() and not dest.is_dir():
+        raise ApiError("The destination is a file, not a folder.", 400)
+
+    if fmt == "zip":
+        with zipfile.ZipFile(target, "r") as zf:
+            total = sum(
+                info.file_size for info in zf.infolist()
+                if not info.is_dir() and (wanted is None or _safe_member(info.filename) in wanted)
+            )
+    elif fmt in TAR_WRITE_MODES:
+        with tarfile.open(target, "r:*") as tf:
+            total = sum(
+                member.size for member in tf.getmembers()
+                if member.isfile() and (wanted is None or _safe_member(member.name) in wanted)
+            )
+    else:
+        total = max(0, _single_size(target, fmt))
+    ensure_storage(total)
+
+    dest.mkdir(parents=True, exist_ok=True)
+    extracted = []
+    skipped = []
+
+    if fmt == "zip":
+        with zipfile.ZipFile(target, "r") as zf:
+            for info in zf.infolist():
+                safe = _safe_member(info.filename)
+                if safe is None:
+                    skipped.append(info.filename)
+                    continue
+                if wanted is not None and safe not in wanted:
+                    continue
+                out = dest / safe
+                if info.is_dir():
+                    out.mkdir(parents=True, exist_ok=True)
+                    continue
+                if not _inside(dest, out):
+                    skipped.append(info.filename)
+                    continue
+                out.parent.mkdir(parents=True, exist_ok=True)
+                if out.exists() and not overwrite:
+                    out = unique_path(out.parent, out.name)
+                try:
+                    with zf.open(info) as src, open(out, "wb") as dst:
+                        _copy_limited(src, dst, info.file_size)
+                except RuntimeError as exc:
+                    raise ApiError(
+                        f"{info.filename}: {exc}. Password-protected archives are not supported.",
+                        400,
+                    ) from exc
+                extracted.append(rel_of(out))
+    elif fmt in TAR_WRITE_MODES:
+        with tarfile.open(target, "r:*") as tf:
+            for member in tf:
+                safe = _safe_member(member.name)
+                if safe is None:
+                    skipped.append(member.name)
+                    continue
+                if wanted is not None and safe not in wanted:
+                    continue
+                out = dest / safe
+                if member.isdir():
+                    out.mkdir(parents=True, exist_ok=True)
+                    continue
+                if not member.isfile():
+                    skipped.append(member.name + " (link or special file)")
+                    continue
+                if not _inside(dest, out):
+                    skipped.append(member.name)
+                    continue
+                out.parent.mkdir(parents=True, exist_ok=True)
+                if out.exists() and not overwrite:
+                    out = unique_path(out.parent, out.name)
+                src = tf.extractfile(member)
+                if src is None:
+                    skipped.append(member.name)
+                    continue
+                with src, open(out, "wb") as dst:
+                    _copy_limited(src, dst, member.size)
+                extracted.append(rel_of(out))
+    else:
+        opener = {"gz": gzip.open, "bz2": bz2.open, "xz": lzma.open}[fmt]
+        out = dest / single_name
+        if out.exists() and not overwrite:
+            out = unique_path(dest, out.name)
+        with opener(target, "rb") as src, open(out, "wb") as dst:
+            _copy_limited(src, dst, None)
+        extracted.append(rel_of(out))
+
+    return {
+        "ok": True,
+        "dest": rel_of(dest),
+        "extracted": len(extracted),
+        "files": extracted[:200],
+        "skipped": skipped[:100],
+    }
+
+
+def _copy_zip_except(source: Path, dest: Path, skip: set) -> None:
+    with zipfile.ZipFile(source, "r") as src, \
+            zipfile.ZipFile(dest, "w", zipfile.ZIP_DEFLATED, allowZip64=True) as dst:
+        for info in src.infolist():
+            safe = _safe_member(info.filename) or info.filename
+            if safe in skip:
+                continue
+            try:
+                if info.is_dir():
+                    dst.writestr(info, b"")
+                else:
+                    with src.open(info) as rf, dst.open(info, "w") as wf:
+                        shutil.copyfileobj(rf, wf, 1 << 20)
+            except RuntimeError as exc:
+                raise ApiError(
+                    f"{info.filename}: {exc}. Password-protected archives are not supported.",
+                    400,
+                ) from exc
+
+
+def api_archive_add(h, q):
+    body = h.read_json()
+    target = safe_path(body.get("path") or "")
+    fmt = _require_archive(target)
+    if fmt != "zip":
+        raise ApiError("Files can only be added to .zip archives in Win95 NAS.", 400)
+
+    rels = [str(r) for r in (body.get("paths") or []) if str(r).strip()]
+    if not rels:
+        raise ApiError("Choose at least one file or folder to add.", 400)
+    sources = [safe_path(r) for r in rels]
+    for source in sources:
+        if not source.exists():
+            raise ApiError(f"\u201c{source.name}\u201d was not found.", 404)
+
+    base = _safe_member(body.get("base") or "") or ""
+    entries = []
+    for source in sources:
+        for path, arc in _walk_source(source):
+            entries.append((path, f"{base}/{arc}" if base else arc))
+    if not entries:
+        raise ApiError("There are no files to add.", 400)
+    ensure_storage(sum(path.stat().st_size for path, _arc in entries))
+
+    TMP_DIR.mkdir(parents=True, exist_ok=True)
+    tmp = target.parent / f".win95nas-add-{secrets.token_hex(6)}.zip"
+    try:
+        with ARCHIVE_LOCK:
+            _copy_zip_except(target, tmp, {arc for _path, arc in entries})
+            with zipfile.ZipFile(tmp, "a", zipfile.ZIP_DEFLATED, allowZip64=True) as zf:
+                for path, arc in entries:
+                    zf.write(path, arc)
+            os.replace(tmp, target)
+    finally:
+        tmp.unlink(missing_ok=True)
+    return {"ok": True, "entry": describe(target), "added": len(entries)}
+
+
+def api_archive_delete(h, q):
+    body = h.read_json()
+    target = safe_path(body.get("path") or "")
+    fmt = _require_archive(target)
+    if fmt != "zip":
+        raise ApiError("Entries can only be removed from .zip archives.", 400)
+
+    names = set()
+    for member in body.get("members") or []:
+        safe = _safe_member(str(member))
+        if safe:
+            names.add(safe)
+    if not names:
+        raise ApiError("Select at least one entry to delete.", 400)
+
+    with zipfile.ZipFile(target, "r") as zf:
+        existing = {(_safe_member(info.filename) or info.filename) for info in zf.infolist()}
+    removed = sorted(names & existing)
+    if not removed:
+        raise ApiError("Those entries are not in the archive.", 404)
+
+    TMP_DIR.mkdir(parents=True, exist_ok=True)
+    tmp = target.parent / f".win95nas-del-{secrets.token_hex(6)}.zip"
+    try:
+        with ARCHIVE_LOCK:
+            _copy_zip_except(target, tmp, set(removed))
+            os.replace(tmp, target)
+    finally:
+        tmp.unlink(missing_ok=True)
+    return {"ok": True, "entry": describe(target), "removed": len(removed), "names": removed}
+
+
+def api_archive_test(h, q):
+    body = h.read_json()
+    target = safe_path(body.get("path") or "")
+    fmt = _require_archive(target)
+    errors = []
+    checked = 0
+    encrypted = False
+
+    if fmt == "zip":
+        with zipfile.ZipFile(target, "r") as zf:
+            for info in zf.infolist():
+                if info.is_dir():
+                    continue
+                if info.flag_bits & 0x1:
+                    encrypted = True
+                    continue
+                try:
+                    with zf.open(info) as fh:
+                        while fh.read(1 << 20):
+                            pass
+                    checked += 1
+                except Exception as exc:  # noqa: BLE001 - report every failure
+                    errors.append(f"{info.filename}: {exc}")
+    elif fmt in TAR_WRITE_MODES:
+        try:
+            with tarfile.open(target, "r:*") as tf:
+                for member in tf:
+                    if not member.isfile():
+                        continue
+                    fh = tf.extractfile(member)
+                    if fh is None:
+                        errors.append(f"{member.name}: cannot read entry")
+                        continue
+                    with fh:
+                        while fh.read(1 << 20):
+                            pass
+                    checked += 1
+        except (tarfile.TarError, OSError, EOFError) as exc:
+            errors.append(str(exc))
+    else:
+        opener = {"gz": gzip.open, "bz2": bz2.open, "xz": lzma.open}[fmt]
+        try:
+            with opener(target, "rb") as fh:
+                while fh.read(1 << 20):
+                    pass
+            checked = 1
+        except (OSError, EOFError) as exc:
+            errors.append(str(exc))
+
+    message = ""
+    if encrypted:
+        message = "This archive is password-protected; entries cannot be tested."
+    elif errors:
+        message = f"{len(errors)} problem(s) found."
+    else:
+        message = "No errors found."
+    return {"ok": not errors and not encrypted, "checked": checked,
+            "errors": errors[:50], "encrypted": encrypted, "message": message}
+
+
+def api_archive_member(h, q):
+    target = safe_path(qv(q, "path", ""))
+    fmt = _require_archive(target)
+    member = qv(q, "member", "")
+    safe = _safe_member(member)
+    TMP_DIR.mkdir(parents=True, exist_ok=True)
+
+    if fmt == "zip":
+        with zipfile.ZipFile(target, "r") as zf:
+            info = next(
+                (i for i in zf.infolist()
+                 if (_safe_member(i.filename) or i.filename) == (safe or member)),
+                None,
+            )
+            if info is None:
+                raise ApiError("Entry not found", 404)
+            if info.is_dir():
+                raise ApiError("That entry is a folder", 400)
+            name = os.path.basename(info.filename.replace("\\", "/")) or "member"
+            out = TMP_DIR / f"{secrets.token_hex(6)}_{sanitize_name(name)}"
+            try:
+                with zf.open(info) as src, open(out, "wb") as dst:
+                    _copy_limited(src, dst, info.file_size)
+            except RuntimeError as exc:
+                out.unlink(missing_ok=True)
+                raise ApiError("This entry is password-protected.", 400) from exc
+    elif fmt in TAR_WRITE_MODES:
+        with tarfile.open(target, "r:*") as tf:
+            found = next(
+                (m for m in tf.getmembers()
+                 if (_safe_member(m.name) or m.name) == (safe or member)),
+                None,
+            )
+            if found is None:
+                raise ApiError("Entry not found", 404)
+            if not found.isfile():
+                raise ApiError("That entry is a folder", 400)
+            name = os.path.basename(found.name) or "member"
+            out = TMP_DIR / f"{secrets.token_hex(6)}_{sanitize_name(name)}"
+            src = tf.extractfile(found)
+            if src is None:
+                raise ApiError("Cannot read that entry", 400)
+            with src, open(out, "wb") as dst:
+                _copy_limited(src, dst, found.size)
+    else:
+        name = _strip_archive_suffix(target.name)
+        out = TMP_DIR / f"{secrets.token_hex(6)}_{sanitize_name(name)}"
+        opener = {"gz": gzip.open, "bz2": bz2.open, "xz": lzma.open}[fmt]
+        with opener(target, "rb") as src, open(out, "wb") as dst:
+            _copy_limited(src, dst, None)
+
+    h.send_disk_file(out, download_name=name, inline=True, cleanup=out)
+
+
 def api_raw(h, q):
     target = safe_path(qv(q, "path", ""))
     if not target.is_file():
@@ -2039,6 +2675,43 @@ def api_text_put(h, q):
     old_size = target.stat().st_size if target.exists() else 0
     ensure_storage(encoded_size, replacing=old_size)
     target.write_text(text, "utf-8")
+    return {"ok": True, "entry": describe(target)}
+
+
+IMAGE_SAVE_EXT = {".png", ".bmp", ".jpg", ".jpeg", ".gif", ".webp"}
+
+
+def api_image_put(h, q):
+    """Save a picture from Paint (base64 data URL) to the NAS."""
+    body = h.read_json()
+    target = safe_path(body.get("path", ""))
+    if target.suffix.lower() not in IMAGE_SAVE_EXT:
+        raise ApiError("Save the picture as a PNG, BMP, JPEG, GIF or WebP file.", 400)
+    if not target.parent.is_dir():
+        raise ApiError("Folder not found", 404)
+    if target.exists() and target.is_dir():
+        raise ApiError("That is a folder", 400)
+    data = body.get("data") or ""
+    if not isinstance(data, str) or not data:
+        raise ApiError("The picture is empty.", 400)
+    if "," in data[:64]:
+        data = data.split(",", 1)[1]
+    try:
+        raw = base64.b64decode(data, validate=False)
+    except Exception as exc:
+        raise ApiError("The picture data is not valid.", 400) from exc
+    if not raw:
+        raise ApiError("The picture is empty.", 400)
+    if len(raw) > 32 * 1024 * 1024:
+        raise ApiError("That picture is too large to save.", 413)
+    old_size = target.stat().st_size if target.exists() else 0
+    ensure_storage(len(raw), replacing=old_size)
+    tmp = target.parent / f".win95nas-img-{secrets.token_hex(6)}.tmp"
+    try:
+        tmp.write_bytes(raw)
+        os.replace(tmp, target)
+    finally:
+        tmp.unlink(missing_ok=True)
     return {"ok": True, "entry": describe(target)}
 
 
@@ -2716,9 +3389,17 @@ ROUTES = {
     ("POST", "/api/move"): api_move,
     ("POST", "/api/upload"): api_upload,
     ("GET", "/api/download"): api_download,
+    ("GET", "/api/archive/list"): api_archive_list,
+    ("POST", "/api/archive/create"): api_archive_create,
+    ("POST", "/api/archive/extract"): api_archive_extract,
+    ("POST", "/api/archive/add"): api_archive_add,
+    ("POST", "/api/archive/delete"): api_archive_delete,
+    ("POST", "/api/archive/test"): api_archive_test,
+    ("GET", "/api/archive/member"): api_archive_member,
     ("GET", "/api/raw"): api_raw,
     ("GET", "/api/text"): api_text_get,
     ("POST", "/api/text"): api_text_put,
+    ("POST", "/api/image/save"): api_image_put,
     ("GET", "/api/tray"): api_tray,
     ("GET", "/api/office"): api_office,
     ("GET", "/api/office/media"): api_office_media,

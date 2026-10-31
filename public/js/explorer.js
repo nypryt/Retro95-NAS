@@ -464,6 +464,24 @@
       if (!multi && entry.type === "file" && (entry.kind === "text" || entry.kind === "code")) {
         items.push({ label: "Open in Notepad", icon: "notepad", action: () => Apps.notepad(entry.path) });
       }
+      if (!multi && entry.type === "file" && entry.kind === "image") {
+        items.push({ label: "Edit in Paint", icon: "paint", action: () => Apps.paint(entry.path) });
+      }
+      if (!multi && entry.type === "file" && entry.kind === "archive") {
+        const stem = entry.name.replace(/\.[^.]+$/, "");
+        items.push({ separator: true });
+        items.push({ label: "Extract Here", icon: "winrar", action: () => WinRAR.extractHere(entry.path) });
+        items.push({ label: "Extract to " + stem + "\\", icon: "winrar", action: () => WinRAR.extractTo(entry.path) });
+        items.push({ label: "Test Archive", icon: "shield", action: () => WinRAR.testPath(entry.path) });
+        items.push({ label: "Add Files to Archive...", icon: "upload", action: () => WinRAR.open(entry.path, { add: true }) });
+      } else {
+        items.push({ separator: true });
+        items.push({
+          label: "Add to Archive...",
+          icon: "winrar",
+          action: () => WinRAR.create(selected.map((item) => item.path), state.path),
+        });
+      }
       items.push({ separator: true });
       items.push({ label: multi ? "Download as ZIP" : "Download", icon: "download", action: () => downloadSelection() });
       items.push({ separator: true });

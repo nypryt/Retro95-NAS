@@ -1,6 +1,6 @@
 @echo off
 setlocal
-title Win95 NAS Setup
+title Retro95 Setup
 cd /d "%~dp0"
 
 where python >nul 2>nul

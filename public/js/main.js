@@ -141,6 +141,7 @@
       { label: "Programs", icon: "folder", submenu: [
         { label: "Accessories", icon: "folder", submenu: [
           { label: "Notepad", icon: "notepad", pin: "notepad", action: () => Apps.notepad() },
+          { label: "Paint", icon: "paint", pin: "paint", action: () => Apps.paint() },
           { label: "Clock", icon: "clock", pin: "clock", action: () => Apps.clock() },
           { label: "Command Prompt", icon: "cmd", pin: "cmd", action: () => Apps.commandPrompt() },
           { label: "MS-DOS Prompt", icon: "msdos", action: () => Apps.msdosPrompt() },
@@ -153,6 +154,7 @@
         ] },
         { label: "Docker Manager", icon: "docker", pin: "docker", action: () => Docker.open() },
         { label: "Tailscale", icon: "tailscale", pin: "tailscale", action: () => Tailscale.open() },
+        { label: "WinRAR", icon: "winrar", pin: "winrar", action: () => WinRAR.pick() },
         { label: "Windows Explorer", icon: "computer", pin: "computer", action: () => Explorer.open("/") },
         { separator: true },
         { label: "Microsoft Office", icon: "office", submenu: [

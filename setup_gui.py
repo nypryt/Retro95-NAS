@@ -19,6 +19,8 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+import terms
+
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 SETUP_FILE = DATA_DIR / "setup.json"
@@ -127,7 +129,8 @@ def port_is_busy(port: int) -> bool:
 
 
 def write_config(root: Path, port: int = 4040, tray: bool = True,
-                 open_browser: bool = True, limit_gb: float = 64) -> dict:
+                 open_browser: bool = True, limit_gb: float = 64,
+                 terms_accepted: bool = False) -> dict:
     """Validate the basics, create the folder and save data/setup.json."""
     root = resolve_root(str(root))
     if root.exists() and not root.is_dir():
@@ -149,6 +152,8 @@ def write_config(root: Path, port: int = 4040, tray: bool = True,
         "storageLimitGb": float(limit_gb),
         "createdAt": datetime.now().isoformat(timespec="seconds"),
     }
+    if terms_accepted:
+        config.update(terms.acceptance())
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     tmp = SETUP_FILE.with_suffix(".json.tmp")
     tmp.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
@@ -182,7 +187,7 @@ class Wizard:
         self._confirmed_root = None
 
         self.root = tk.Tk()
-        self.root.title("Win95 NAS Setup")
+        self.root.title("Retro95 Setup")
         self.root.configure(bg=BG)
         self.root.resizable(False, False)
         try:
@@ -219,6 +224,7 @@ class Wizard:
             self.limit_var.set(str(config["storageLimitGb"]))
         self.tray_var.set(bool(config.get("tray", True)))
         self.browser_var.set(bool(config.get("openBrowser", True)))
+        # The Terms box is never pre-ticked: the user must tick it themselves.
         try:
             self._confirmed_root = Path(config["root"]).expanduser().resolve()
         except (KeyError, OSError):
@@ -247,7 +253,7 @@ class Wizard:
             tk.Label(header, image=self.flag_img, bg=NAVY, bd=0).pack(side="left", padx=(14, 10), pady=12)
         titles = tk.Frame(header, bg=NAVY)
         titles.pack(side="left", fill="y", pady=14)
-        tk.Label(titles, text="Win95 NAS Setup", bg=NAVY, fg=WHITE, font=FONT_TITLE, anchor="w").pack(anchor="w")
+        tk.Label(titles, text="Retro95 Setup", bg=NAVY, fg=WHITE, font=FONT_TITLE, anchor="w").pack(anchor="w")
         tk.Label(titles, text="Set up your personal 1995 network drive", bg=NAVY, fg="#d7d7ff",
                  font=FONT_SUB, anchor="w").pack(anchor="w", pady=(3, 0))
 
@@ -261,7 +267,7 @@ class Wizard:
         tk.Label(self.sidebar, text="Setup steps", bg=WHITE, fg=GRAY, font=FONT_BOLD,
                  anchor="w").pack(fill="x", padx=12, pady=(14, 8))
         self.step_labels = []
-        for text in ("Welcome", "Storage folder", "Server options", "Finish"):
+        for text in ("Welcome", "Terms", "Storage folder", "Server options", "Finish"):
             label = tk.Label(self.sidebar, text="\u25a0  " + text, bg=WHITE, fg=SHADOW,
                              font=FONT, anchor="w")
             label.pack(fill="x", padx=12, pady=4)
@@ -288,6 +294,7 @@ class Wizard:
 
         self.pages = []
         self._build_welcome()
+        self._build_terms()
         self._build_storage()
         self._build_options()
         self._build_finish()
@@ -333,6 +340,38 @@ class Wizard:
             anchor="w").pack(fill="x", pady=(4, 8))
         tk.Label(page, text="Click Next to begin.", bg=WHITE, fg=SHADOW,
                  font=FONT_SMALL, anchor="w").pack(fill="x", pady=(8, 0))
+
+    def _build_terms(self):
+        tk = self.tk
+        page = self._new_page()
+        self._heading(page, "Terms and Conditions",
+                      "Retro 95 NAS is an independent project provided as is. Read the "
+                      "terms below, then tick the box to continue.")
+
+        wrap = tk.Frame(page, bg=WHITE)
+        wrap.pack(fill="both", expand=True)
+        scroll = tk.Scrollbar(wrap, width=15)
+        scroll.pack(side="right", fill="y")
+        self.terms_text = tk.Text(
+            wrap, wrap="word", font=FONT_SMALL, relief="sunken", bd=2,
+            bg=WHITE, fg=DARK, height=11, width=50, padx=6, pady=6,
+            insertbackground=DARK, highlightthickness=0,
+            yscrollcommand=scroll.set)
+        self.terms_text.pack(side="left", fill="both", expand=True)
+        scroll.configure(command=self.terms_text.yview)
+        self.terms_text.insert("1.0", terms.plain())
+        self.terms_text.configure(state="disabled")
+
+        self.terms_var = tk.BooleanVar(value=False)
+        self.terms_check = tk.Checkbutton(
+            page, text="I have read and agree to the Terms and Conditions and acknowledge the software disclaimers.",
+            variable=self.terms_var, command=self._update_terms_state,
+            bg=WHITE, activebackground=WHITE, selectcolor=WHITE, font=FONT_BOLD,
+            anchor="w", justify="left", wraplength=420, highlightthickness=0)
+        self.terms_check.pack(fill="x", pady=(10, 2))
+        self.terms_hint = tk.Label(page, text="", bg=WHITE, fg="#a00000",
+                                   font=FONT_SMALL, anchor="w")
+        self.terms_hint.pack(fill="x")
 
     def _build_storage(self):
         tk = self.tk
@@ -441,10 +480,35 @@ class Wizard:
                             font=FONT_BOLD if i == index else FONT)
         self.back_btn.configure(state="normal" if index > 0 else "disabled")
         self.next_btn.configure(text="Finish" if index == len(self.pages) - 1 else "Next >")
-        if index == 1:
+        if index == 2:
             self._update_storage_info()
         if index == len(self.pages) - 1:
             self._update_summary()
+        self._update_terms_state()
+
+    def _update_terms_state(self) -> None:
+        """The Terms page cannot be left until the box is ticked."""
+        if not hasattr(self, "terms_var"):
+            return
+        accepted = bool(self.terms_var.get())
+        if self.page == 1:
+            self.next_btn.configure(state="normal" if accepted else "disabled")
+            self.terms_hint.configure(
+                text="" if accepted else
+                "Tick the box above to agree to the Terms and Conditions.")
+        else:
+            self.next_btn.configure(state="normal")
+
+    def _require_terms(self) -> bool:
+        if self.terms_var.get():
+            return True
+        self.terms_hint.configure(
+            text="You must read and accept the Terms and Conditions to continue.")
+        try:
+            self.terms_check.focus_set()
+        except Exception:
+            pass
+        return False
 
     def _update_storage_info(self) -> None:
         try:
@@ -504,7 +568,7 @@ class Wizard:
         details = "\n".join("    %s (%d item%s)" % (p, c, "" if c == 1 else "s")
                             for p, c in candidates)
         return self.messagebox.askyesno(
-            "Win95 NAS Setup",
+            "Retro95 Setup",
             "Existing NAS files were found in:\n\n%s\n\n"
             "The folder you picked is different. Those files will stay where they are "
             "and will not appear in the new NAS.\n\n"
@@ -544,7 +608,7 @@ class Wizard:
             path = resolve_root(self.root_var.get())
             path.mkdir(parents=True, exist_ok=True)
         except Exception as exc:
-            self.messagebox.showerror("Win95 NAS Setup", "Cannot open that folder:\n%s" % exc,
+            self.messagebox.showerror("Retro95 Setup", "Cannot open that folder:\n%s" % exc,
                                       parent=self.root)
             return
         try:
@@ -560,7 +624,7 @@ class Wizard:
         try:
             path = resolve_root(self.root_var.get())
         except Exception as exc:
-            self.messagebox.showerror("Win95 NAS Setup", "That path is not valid:\n%s" % exc,
+            self.messagebox.showerror("Retro95 Setup", "That path is not valid:\n%s" % exc,
                                       parent=self.root)
             return False
         public_dir = BASE_DIR / "public"
@@ -568,14 +632,14 @@ class Wizard:
         if (path == BASE_DIR or path == public_dir or path == data_dir
                 or public_dir in path.parents or data_dir in path.parents):
             self.messagebox.showerror(
-                "Win95 NAS Setup",
+                "Retro95 Setup",
                 "Please choose a separate folder for your files.\n\n"
                 "This folder contains the Win95 NAS program or its settings. "
                 "The default D:\\NAS\\nas-data folder is fine.",
                 parent=self.root)
             return False
         if path.exists() and not path.is_dir():
-            self.messagebox.showerror("Win95 NAS Setup",
+            self.messagebox.showerror("Retro95 Setup",
                                       "That path points at a file, not a folder.",
                                       parent=self.root)
             return False
@@ -585,7 +649,7 @@ class Wizard:
             probe.write_text("ok", encoding="utf-8")
             probe.unlink()
         except OSError as exc:
-            self.messagebox.showerror("Win95 NAS Setup",
+            self.messagebox.showerror("Retro95 Setup",
                                       "That folder cannot be used:\n%s" % exc,
                                       parent=self.root)
             return False
@@ -601,11 +665,11 @@ class Wizard:
         try:
             port = int(self.port_var.get().strip())
         except ValueError:
-            self.messagebox.showerror("Win95 NAS Setup", "The web port must be a number.",
+            self.messagebox.showerror("Retro95 Setup", "The web port must be a number.",
                                       parent=self.root)
             return False
         if not 1024 <= port <= 65535:
-            self.messagebox.showerror("Win95 NAS Setup",
+            self.messagebox.showerror("Retro95 Setup",
                                       "Choose a port between 1024 and 65535.",
                                       parent=self.root)
             return False
@@ -614,7 +678,7 @@ class Wizard:
         except ValueError:
             limit = 0
         if limit <= 0:
-            self.messagebox.showerror("Win95 NAS Setup",
+            self.messagebox.showerror("Retro95 Setup",
                                       "The storage limit must be greater than zero.",
                                       parent=self.root)
             return False
@@ -634,7 +698,8 @@ class Wizard:
                         write_config(self._root_path, port=port,
                                      tray=bool(self.tray_var.get()),
                                      open_browser=bool(self.browser_var.get()),
-                                     limit_gb=limit)
+                                     limit_gb=limit,
+                                     terms_accepted=True)
                     except Exception:
                         pass
                     try:
@@ -647,7 +712,7 @@ class Wizard:
                     self.root.destroy()
                 return False
             again = self.messagebox.askyesno(
-                "Win95 NAS Setup",
+                "Retro95 Setup",
                 "Port %d is already in use by another program.\n\n"
                 "Choose a different port, or continue anyway." % port,
                 parent=self.root)
@@ -659,11 +724,14 @@ class Wizard:
         if self.page == 0:
             self._show(1)
         elif self.page == 1:
-            if self._validate_storage():
+            if self._require_terms():
                 self._show(2)
         elif self.page == 2:
-            if self._validate_options():
+            if self._validate_storage():
                 self._show(3)
+        elif self.page == 3:
+            if self._validate_options():
+                self._show(4)
         else:
             self._finish()
 
@@ -672,8 +740,11 @@ class Wizard:
             self._show(self.page - 1)
 
     def _finish(self) -> None:
-        if not self._validate_storage():
+        if not self._require_terms():
             self._show(1)
+            return
+        if not self._validate_storage():
+            self._show(2)
             return
         try:
             config = write_config(
@@ -682,9 +753,10 @@ class Wizard:
                 tray=bool(self.tray_var.get()),
                 open_browser=bool(self.browser_var.get()),
                 limit_gb=float(self.limit_var.get().strip()),
+                terms_accepted=True,
             )
         except Exception as exc:
-            self.messagebox.showerror("Win95 NAS Setup",
+            self.messagebox.showerror("Retro95 Setup",
                                       "Could not save the setup:\n%s" % exc,
                                       parent=self.root)
             return
@@ -692,7 +764,7 @@ class Wizard:
         self.root.destroy()
 
     def _cancel(self) -> None:
-        if self.messagebox.askyesno("Win95 NAS Setup",
+        if self.messagebox.askyesno("Retro95 Setup",
                                     "Setup is not finished. Cancel anyway?",
                                     parent=self.root):
             self.result = None
@@ -727,6 +799,10 @@ def main(argv=None) -> int:
         return 0
 
     if "--no-gui" in argv:
+        if "--accept-terms" not in argv:
+            print("The Terms and Conditions must be accepted before setup.", file=sys.stderr)
+            print("Read TERMS.md, then add --accept-terms to this command.", file=sys.stderr)
+            return 1
         root = _arg(argv, "--root", str(DEFAULT_ROOT))
         port = int(_arg(argv, "--port", "4040"))
         limit = float(_arg(argv, "--limit", "64"))
@@ -737,6 +813,7 @@ def main(argv=None) -> int:
                 tray=not _flag(argv, "--no-tray"),
                 open_browser=not _flag(argv, "--no-browser"),
                 limit_gb=limit,
+                terms_accepted=True,
             )
         except Exception as exc:
             print("Setup failed: %s" % exc, file=sys.stderr)

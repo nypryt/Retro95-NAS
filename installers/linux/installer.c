@@ -67,8 +67,8 @@ int main(void) {
   }
   close(fd);
 
-  printf("\n  Win95 NAS installer\n");
-  printf("  -------------------\n");
+  printf("\n  Retro95 Setup\n");
+  printf("  -------------\n");
   printf("  Installing to %s\n\n", dest);
 
   if (mkdirs(dest) != 0) {
