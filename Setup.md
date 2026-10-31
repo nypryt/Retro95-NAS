@@ -3,11 +3,10 @@
 A retro-inspired Network Attached Storage application featuring a classic Windows 95-style interface, bringing nostalgic desktop computing to modern storage.
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-1.1-blue?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/Version-1.0.1-blue?style=for-the-badge" alt="Version">
   <img src="https://img.shields.io/badge/Windows-x64-blue?style=for-the-badge&logo=windows" alt="Windows">
   <img src="https://img.shields.io/badge/macOS-x64-black?style=for-the-badge&logo=apple" alt="macOS">
   <img src="https://img.shields.io/badge/Linux-x64-orange?style=for-the-badge&logo=linux" alt="Linux">
-  <img src="https://img.shields.io/badge/Python-3.15%2B-yellow?style=for-the-badge&logo=python" alt="Python">
   <img src="https://img.shields.io/badge/Architecture-x86__64-informational?style=for-the-badge" alt="Architecture">
 </p>
 
@@ -16,12 +15,17 @@ A retro-inspired Network Attached Storage application featuring a classic Window
 ## Table of Contents
 
 - [Features](#features)
-- [Compatibility](#compatibility)
 - [System Requirements](#system-requirements)
-- [Windows Installation](#windows-installation)
-- [macOS Installation](#macos-installation)
-- [Linux Installation](#linux-installation)
+- [Storage Recommendations](#storage-recommendations)
+- [Compatibility](#compatibility)
+- [Installation](#installation)
+  - [Windows](#windows-installation)
+  - [macOS](#macos-installation)
+  - [Linux](#linux-installation)
 - [First-Time Setup](#first-time-setup)
+- [Port Configuration](#port-configuration)
+- [Docker Integration](#docker-integration)
+- [Tailscale Integration](#tailscale-integration)
 - [Network Access](#network-access)
 - [Troubleshooting](#troubleshooting)
 - [Security](#security)
@@ -33,305 +37,476 @@ A retro-inspired Network Attached Storage application featuring a classic Window
 
 - Windows 95-inspired desktop interface.
 - Network Attached Storage functionality.
-- Cross-platform support.
+- Cross-platform support for Windows, macOS and Linux.
 - Native macOS and Linux support.
 - Integrated Paint application.
+- Docker integration.
 - Tailscale integration.
+- Configurable application port.
+- Browser-based interface.
 - Retro-inspired desktop experience.
+
+---
+
+## System Requirements
+
+| Component | Minimum | Recommended |
+|---|---|---|
+| Operating System | Windows 10, macOS, Linux | Latest supported version |
+| Architecture | x86-64 | x86-64 |
+| CPU | Dual-core processor | Quad-core processor or better |
+| RAM | 2 GB | 8 GB or more |
+| Application Storage | 20 MB free | 200 GB free |
+| NAS Storage | 1 GB free | 2 GB - 64 GB or more |
+| Network | Wi-Fi or Mobile Hotspot | Ethernet |
+| Python | 3.11+ where required | 3.15+ |
+
+> Python installation requirements depend on the platform installer. Windows users do not need to manually install Python when using the official installer.
+
+## Storage Recommendations
+
+Retro95 NAS is designed for storing files, documents, photos, videos and other data.
+
+The following table provides suggested NAS storage capacities:
+
+| Usage | Suggested Capacity |
+|---|---:|
+| Basic personal storage | 12 GB |
+| Documents and photos | 24 GB |
+| General NAS usage | 32 - 64 GB |
+| Large media libraries | 128 - 256 GB |
+| Extensive storage collections | 512 GB or more |
+
+These are recommendations, not application-imposed storage limits.
+
+**Application storage and NAS storage are separate requirements.** The application itself requires relatively little space, while your NAS storage capacity depends on the files you intend to store.
+
+---
 
 ## Compatibility
 
-| Operating System | Architecture | Compatibility |
+Retro95 NAS currently supports x86-64 systems only.
+
+| Operating System | Architecture | Support |
 |---|---|---|
 | Windows 10 | x64 | Supported |
 | Windows 11 | x64 | Supported |
 | macOS | Intel x64 | Supported |
 | Linux | x86_64 | Supported |
-| ARM64 | ARM64 | Unsupported |
+| ARM64 | AArch64 | Unsupported |
+| ARM32 | ARM | Unsupported |
 | Other architectures | Various | Unsupported |
 
-> **Architecture limitation:** Retro95 NAS currently supports x86-64 systems only. ARM64 and other architectures are not supported.
-
-## System Requirements
-
-| Component | Requirement |
-|---|---|
-| Operating System | Windows 10/11, macOS, Linux |
-| Architecture | x86-64 |
-| Python | 3.11 or newer |
-| Recommended Python | 3.15+ |
-| RAM | 2 GB recommended |
-| Storage | 200 MB free space recommended |
-| Internet | Required for initial downloads |
+> ARM64 and other non-x64 architectures are currently unsupported.
 
 ---
 
-# Windows Installation
+# Installation
 
-Windows users can install Retro95 NAS using the official Windows installer.
+Download the appropriate installer from the official GitHub Releases page.
 
-No Git, manual Python installation, or command-line interaction is required.
+**[Download Retro95 NAS - Latest Release](https://github.com/nypryt/Retro95-NAS/releases/latest)**
 
-### Step 1. Download Retro95 NAS
+Select the installer matching your operating system.
 
-1. Visit the [Latest Retro95 NAS Release](https://github.com/nypryt/Retro95-NAS/releases/latest).
-2. Locate the **Assets** section.
+Do not download the repository source code or use Git to install Retro95 NAS.
+
+---
+
+## Windows Installation
+
+Windows installation is designed to be straightforward. The installer handles the setup process and automatically launches Retro95 NAS when installation is complete.
+
+### Step 1. Download the Installer
+
+1. Visit the [latest Retro95 NAS release](https://github.com/nypryt/Retro95-NAS/releases/latest).
+2. Locate the `Assets` section.
 3. Download the Windows x64 installer.
-4. Wait for the download to complete.
+4. Wait for the download to finish.
 
-> **Important:** Download the installer from the latest release's Assets section. Do not download the source code ZIP files.
+**Important:** Download the installer from the latest release's Assets section. Do not download the source code ZIP files.
 
-### Step 2. Open the Installer
+### Step 2. Run the Installer
 
 1. Open your Downloads folder.
-2. Locate the downloaded Retro95 NAS installer.
-3. Double-click the installer to open it.
+2. Double-click the downloaded Retro95 NAS installer.
+3. Follow the instructions displayed by the installer.
+4. Select your preferred installation options.
+5. Complete the installation.
 
-### Step 3. Install Retro95 NAS
+### Step 3. Automatic Launch
 
-1. Follow the instructions displayed by the installer.
-2. Choose an installation location if requested.
-3. Continue through the installation process.
-4. Wait for installation to finish.
+After installation completes, Retro95 NAS automatically starts.
 
-### Step 4. Launch Retro95 NAS
+Your default browser will automatically open:
 
-Once installation is complete:
+`http://localhost:4040`
 
-1. Open Retro95 NAS from the Desktop shortcut or Start Menu, if available.
-2. Allow the application to initialize.
-3. Complete any first-run setup instructions.
+You can now access the Retro95 NAS interface.
 
-### Step 5. Access the Interface
+### Starting Retro95 NAS Again
 
-Open your preferred web browser and navigate to:
+To start Retro95 NAS after closing it:
 
-```text
-http://localhost:4040
-```
+1. Navigate to your Retro95 NAS installation folder.
+2. Locate `Start.bat`.
+3. Double-click `Start.bat`.
 
-**Installation complete.**
+Retro95 NAS will start again using its configured port.
+
+### Port Already in Use
+
+If `localhost:4040` is already occupied by another application:
+
+1. Run the Retro95 NAS installer again.
+2. Continue through the installation instructions.
+3. When prompted for the application port, select a different available port.
+4. Complete the installation.
+
+Use the newly configured port to access Retro95 NAS.
+
+For example:
+
+`http://localhost:8080`
 
 ---
 
-# macOS Installation
+## macOS Installation
 
 Retro95 NAS supports Intel-based Macs running macOS.
 
-### Step 1. Download the Source Code
+### Step 1. Download the Installer
 
-1. Visit the [Retro95 NAS Repository](https://github.com/nypryt/Retro95-NAS).
-2. Download the repository ZIP archive.
-3. Extract the downloaded archive.
+1. Visit the [latest Retro95 NAS release](https://github.com/nypryt/Retro95-NAS/releases/latest).
+2. Locate the `Assets` section.
+3. Download the macOS x64 installer.
 
-### Step 2. Install Python
+### Step 2. Install Retro95 NAS
 
-Check whether Python is installed:
+1. Open the downloaded installer.
+2. Follow the installation instructions.
+3. Complete the installation process.
+4. Launch Retro95 NAS.
 
-```bash
-python3 --version
-```
+### Step 3. Access Retro95 NAS
 
-If Python 3.11 or newer is unavailable:
+Open your browser and navigate to:
 
-1. Visit [Python Downloads](https://www.python.org/downloads/macos/).
-2. Download a compatible macOS x64 installer.
-3. Complete the installation.
+`http://localhost:4040`
 
-Verify:
-
-```bash
-python3 --version
-```
-
-### Step 3. Launch Retro95 NAS
-
-Open Terminal and navigate to the extracted project directory.
-
-Run:
-
-```bash
-python3 launcher.py
-```
-
-### Step 4. Access Retro95 NAS
-
-Open your browser:
-
-```text
-http://localhost:4040
-```
+If you selected a different port during setup, use that port instead.
 
 ---
 
-# Linux Installation
+## Linux Installation
 
 Retro95 NAS supports x86-64 Linux distributions.
 
-### Option 1. ELF Installer
+### Step 1. Download the Installer
 
-1. Visit the [Latest Retro95 NAS Release](https://github.com/nypryt/Retro95-NAS/releases/latest).
-2. Download the Linux x64 ELF installer if available.
-3. Open a terminal in the download directory.
+1. Visit the [latest Retro95 NAS release](https://github.com/nypryt/Retro95-NAS/releases/latest).
+2. Open the `Assets` section.
+3. Download the Linux x64 ELF installer.
 
-Make the installer executable:
+### Step 2. Make the Installer Executable
+
+Open a terminal in the download directory.
 
 ```bash
 chmod +x ./Win95NAS-Installer.elf
 ```
 
-Run the installer:
+### Step 3. Run the Installer
 
 ```bash
 ./Win95NAS-Installer.elf
 ```
 
-Follow the installation instructions.
+### Step 4. Complete Installation
 
-### Option 2. Run From Source
+Follow the installer instructions and allow the installation to complete.
 
-#### Step 1. Download the Source Code
-
-1. Visit the [Retro95 NAS Repository](https://github.com/nypryt/Retro95-NAS).
-2. Download the repository ZIP archive.
-3. Extract the archive.
-
-#### Step 2. Install Python
-
-Check your existing Python installation:
-
-```bash
-python3 --version
-```
-
-If Python 3.11 or newer is unavailable, download a compatible version from:
-
-[Python Downloads](https://www.python.org/downloads/source/)
-
-Install Python using your distribution's supported installation method.
-
-#### Step 3. Launch Retro95 NAS
-
-Navigate to the extracted project directory.
-
-Run:
-
-```bash
-python3 launcher.py
-```
-
-#### Step 4. Access the Interface
+### Step 5. Access Retro95 NAS
 
 Open your browser:
 
-```text
-http://localhost:4040
-```
+`http://localhost:4040`
+
+If you configured another port, use the selected port.
 
 ---
 
 ## First-Time Setup
 
-After launching Retro95 NAS:
+After installation, Retro95 NAS initializes its application environment.
 
-1. Allow the application to initialize.
-2. Follow the on-screen setup instructions.
-3. Configure your application settings.
-4. Configure your storage locations.
-5. Verify that the application is running correctly.
+Complete the available setup instructions and configure your preferred settings.
+
+Recommended first-time configuration:
+
+1. Verify that Retro95 NAS starts correctly.
+2. Open the web interface.
+3. Configure your storage locations.
+4. Review application settings.
+5. Configure optional integrations if required.
+6. Verify network accessibility.
 
 Keep your application data and NAS storage directories intact when updating the application.
 
-## Network Access
+---
 
-Retro95 NAS can be accessed through a web browser.
+## Port Configuration
 
-For local access, use:
+Retro95 NAS uses port `4040` by default.
 
-```text
-http://localhost:4040
-```
+The web interface is accessible through:
 
-To access Retro95 NAS from another device on your network, use the IP address of the computer hosting the application:
+`http://localhost:4040`
 
-```text
-http://YOUR-LOCAL-IP:4040
-```
+### Changing the Port
 
-Replace `YOUR-LOCAL-IP` with the host computer's local IP address.
+If port 4040 is already occupied:
 
-Ensure that:
+1. Run the installer again.
+2. Select a different available port when prompted.
+3. Complete the installation.
+4. Open Retro95 NAS using the newly selected port.
 
-- Both devices can communicate over the network.
-- The application accepts connections from other devices.
-- Your firewall permits the required connection.
-- You are using the correct IP address.
+Example configurations:
 
-## Troubleshooting
+| Port | Local Address |
+|---|---|
+| 4040 | `http://localhost:4040` |
+| 8080 | `http://localhost:8080` |
+| 3000 | `http://localhost:3000` |
 
-### Python Is Not Installed
-
-For macOS and Linux source installations, check:
-
-```bash
-python3 --version
-```
-
-If Python is missing or outdated, install Python 3.11 or newer.
-
-Windows installer users do not need to install Python separately.
-
-### Application Does Not Launch
-
-Make sure the application has been installed or extracted correctly.
-
-For source installations, try launching it from the project directory:
-
-```bash
-python3 launcher.py
-```
-
-### Port 4040 Is Already in Use
-
-Another application may already be using the default port.
-
-Check for conflicting processes before starting Retro95 NAS.
-
-### Cannot Access Retro95 NAS From Another Device
-
-Check:
-
-- Your network connection.
-- Firewall configuration.
-- Application listening address.
-- Host computer IP address.
-
-### Windows Installer Is Missing
-
-1. Open the [Latest Release](https://github.com/nypryt/Retro95-NAS/releases/latest).
-2. Expand the Assets section.
-3. Check whether the Windows installer is available.
-
-If the installer is missing, the release maintainer must upload the Windows installer to the release assets.
+These are example ports, not guaranteed available ports.
 
 ---
 
-## Security
+# Docker Integration
+
+Retro95 NAS provides optional Docker integration for systems with Docker installed.
+
+Docker integration allows Retro95 NAS to interact with Docker through the Docker CLI.
+
+### Enabling Docker Integration
+
+During installation:
+
+1. Locate the Docker Integration option.
+2. Enable it if you want Docker functionality.
+3. Continue with the installation.
+
+### Docker Detection
+
+The installer checks whether the Docker CLI is available.
+
+**If Docker CLI is detected:**
+
+- Retro95 NAS can use the existing Docker installation.
+- An additional Docker installation is unnecessary.
+
+**If Docker CLI is not detected:**
+
+- The installer checks whether Docker Desktop is available.
+- If Docker Desktop is missing, the installer offers to download and install it.
+- Docker Desktop installation is handled through its official installation process.
+
+### Windows Docker Installation
+
+Docker Desktop can be installed using its official Windows installer.
+
+Official download:
+
+https://www.docker.com/products/docker-desktop/
+
+Default installation locations include:
+
+- Per-user installation: `%LOCALAPPDATA%\Programs\DockerDesktop`
+- All-users installation: `C:\Program Files\Docker\Docker`
+
+Docker Desktop may require WSL 2 and a system restart.
+
+### Docker Availability
+
+Docker CLI detection does not necessarily mean the Docker engine is running.
+
+The integration should verify that the Docker engine is available before attempting Docker operations.
+
+Check Docker manually:
+
+```bash
+docker --version
+```
+
+Check whether the Docker engine is running:
+
+```bash
+docker info
+```
+
+Official documentation:
+
+https://docs.docker.com/
+
+---
+
+# Tailscale Integration
+
+Retro95 NAS provides optional Tailscale integration for private network connectivity.
+
+Tailscale allows devices in your private tailnet to communicate without requiring traditional router port forwarding.
+
+### Enabling Tailscale Integration
+
+During installation:
+
+1. Locate the Tailscale Integration option.
+2. Enable it if you want Tailscale functionality.
+3. Continue with installation.
+
+### Tailscale Detection
+
+The installer checks whether Tailscale is installed.
+
+**If Tailscale is detected:**
+
+- Retro95 NAS can use the existing Tailscale installation.
+- An additional Tailscale installation is unnecessary.
+
+**If Tailscale is not detected:**
+
+- The installer offers to download Tailscale.
+- Follow the official Tailscale installation instructions.
+- Authenticate your device when prompted.
+
+Official website:
+
+https://tailscale.com/
+
+### Connecting Through Tailscale
+
+Once Tailscale is installed and connected:
+
+1. Ensure the host computer is connected to your tailnet.
+2. Ensure the accessing device is also connected to the same tailnet.
+3. Identify the host computer's Tailscale IP address.
+4. Open a browser on the accessing device.
+5. Navigate to the host IP and Retro95 NAS port.
+
+Example:
+
+`http://100.x.x.x:4040`
+
+Replace the example IP address with the actual Tailscale IP address of your host computer.
+
+The application must be configured to accept connections through the relevant network interface.
+
+---
+
+## Network Access
+
+Retro95 NAS provides browser-based access.
+
+### Local Access
+
+On the computer running Retro95 NAS:
+
+`http://localhost:4040`
+
+### Local Network Access
+
+From another device on the same accessible network:
+
+`http://YOUR-LOCAL-IP:4040`
+
+### Tailscale Access
+
+From another device connected to your tailnet:
+
+`http://YOUR-TAILSCALE-IP:4040`
+
+Replace the example addresses and port with your actual configuration.
+
+Ensure that your firewall and application listening configuration permit the connection.
+
+---
+
+## Troubleshooting
+
+### Retro95 NAS Does Not Automatically Open
+
+Verify that the installation completed successfully.
+
+On Windows, open the installation folder and double-click:
+
+`Start.bat`
+
+### Port 4040 Is Already in Use
+
+Run the installer again and select a different available port when prompted.
+
+### Cannot Access the Web Interface
+
+Verify that Retro95 NAS is running and that you are using the correct port.
+
+### Docker CLI Is Not Detected
+
+Check whether Docker is installed:
+
+```bash
+docker --version
+```
+
+If Docker is missing, install Docker Desktop using its official installer.
+
+### Docker Engine Is Not Running
+
+Run:
+
+```bash
+docker info
+```
+
+If the Docker engine is unavailable, start Docker Desktop and wait for it to initialize.
+
+### Tailscale Is Not Detected
+
+Verify that Tailscale is installed and running.
+
+Official installation instructions:
+
+https://tailscale.com/download
+
+### Cannot Access Retro95 NAS Through Tailscale
+
+Check the following:
+
+- Both devices are connected to the same tailnet.
+- Tailscale is running on both devices.
+- The host application accepts network connections.
+- The correct Tailscale IP address is being used.
+- The configured application port is accessible.
+
+---
+
+## Security Recommendations
 
 - Use strong authentication credentials.
-- Restrict access to trusted devices.
-- Keep backups of important files.
 - Avoid exposing administrative interfaces directly to the public internet.
-- Keep Retro95 NAS updated.
-- Review network permissions carefully.
+- Review Docker permissions carefully.
+- Keep Tailscale authentication secure.
+
+---
 
 ## Support
 
-Encountered a problem or have a feature suggestion?
+Need help or found a bug?
 
-- [Report a Bug](https://github.com/nypryt/Retro95-NAS/issues)
-- [View Source Code](https://github.com/nypryt/Retro95-NAS)
-- [Download Latest Release](https://github.com/nypryt/Retro95-NAS/releases/latest)
+- [GitHub Repository](https://github.com/nypryt/Retro95-NAS)
+- [Latest Releases](https://github.com/nypryt/Retro95-NAS/releases/latest)
+- [Report an Issue](https://github.com/nypryt/Retro95-NAS/issues)
 
 ---
 
