@@ -3,7 +3,8 @@
 A retro-inspired Network Attached Storage application featuring a classic Windows 95-style interface, bringing nostalgic desktop computing to modern storage.
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-1.0.1-blue?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/Version-1.1-blue?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/Python-3.11%2B-yellow?style=for-the-badge&logo=python" alt="Python">
   <img src="https://img.shields.io/badge/Windows-x64-blue?style=for-the-badge&logo=windows" alt="Windows">
   <img src="https://img.shields.io/badge/macOS-x64-black?style=for-the-badge&logo=apple" alt="macOS">
   <img src="https://img.shields.io/badge/Linux-x64-orange?style=for-the-badge&logo=linux" alt="Linux">
