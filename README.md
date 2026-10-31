@@ -27,10 +27,8 @@ A retro inspired NAS web application featuring a Windows 95 style interface, wit
 
 1. Open the repository's **Releases** page.
 2. Download the latest release package.
-3. Extract the downloaded archive.
-4. Open the extracted project folder.
-5. Double-click `start.bat`.
-6. Follow the on-screen instructions to complete the setup and launch the application.
+3. Double-click the installer.
+4. Follow the on-screen instructions to complete the setup and launch the application.
 
 **Note:** Follow any additional prompts displayed by the setup process. Available features may depend on your system configuration and required permissions.
 
