@@ -1,6 +1,6 @@
 # Retro95 NAS 🖥️
 
-A retro inspired NAS web application featuring a Windows 95 style interface, with centralized management for files, Tailscale, and Docker.
+A retro inspired lightweight NAS web application featuring a Windows 95 style interface, with centralized management for files, Tailscale, and Docker.
 
 ## ✨ Features
 
@@ -9,6 +9,9 @@ A retro inspired NAS web application featuring a Windows 95 style interface, wit
 - 🔗 **Tailscale Management:** Manage Tailscale connectivity and perform actions such as connecting, disconnecting, checking device status, and pinging devices.
 - 🐳 **Docker Management:** Manage Docker containers through the NAS interface, including starting, stopping, and deleting containers.
 - 🌐 **Remote Administration:** Manage supported services through a browser-based interface.
+- 🪶 **Lightwight** Able to run this on a raspberry pi*
+
+> *The storage and ram matters in terms of running this on a raspberry pi
 
 *Availability depends on the implemented functionality, permissions, and system configuration.*
 
