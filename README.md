@@ -49,7 +49,7 @@ Retro95 NAS does **not claim ownership** of any third-party trademarks or intell
 
 ## 👨‍💻 Project Independence Notice
 
-**Retro95 NAS is an independent project** and is not developed, maintained, owned, or officially associated with the developers or maintainers of **RetroNAS** or **Retro95**.
+**Retro95 NAS is an independent project** made by Nypr and is not developed, maintained, owned, or officially associated with the developers or maintainers of **RetroNAS** or **Retro95**.
 
 Despite similarities in naming, Retro95 NAS is a separate project with its own development, codebase, design, and maintainers.
 
