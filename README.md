@@ -47,6 +47,14 @@ These names are used solely for **identification, descriptive, compatibility, or
 
 Retro95 NAS does **not claim ownership** of any third-party trademarks or intellectual property.
 
+## 👨‍💻 Project Independence Notice
+
+**Retro95 NAS is an independent project** and is not developed, maintained, owned, or officially associated with the developers or maintainers of **RetroNAS** or **Retro95**.
+
+Despite similarities in naming, Retro95 NAS is a separate project with its own development, codebase, design, and maintainers.
+
+**We do not claim ownership of, or affiliation with, either project.** Any references to these names are for identification purposes only.
+
 ## ⚠️ Disclaimer
 
 Provided **"AS IS"**, without warranties to the maximum extent permitted by applicable law. Use at your own risk.
