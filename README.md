@@ -34,8 +34,9 @@ A retro inspired lightweight NAS web application featuring a Windows 95 style in
 **Note:** Follow any additional prompts displayed by the setup process. Available features may depend on your system configuration and required permissions.
 
 ## 📄 License
+Released under the PolyForm Noncommercial License 1.0.0. Commercial use is restricted by the license terms.
 
-Refer to the repository's `LICENSE` file.
+Copyright © 2026 Nypr.
 
 ## ⚖️ Third-Party Trademarks
 
