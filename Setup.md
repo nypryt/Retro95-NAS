@@ -70,7 +70,7 @@ A retro-inspired Network Attached Storage application featuring a classic Window
 | Platform | Package | Testing Status |
 |---|---|---|
 | Windows | `.exe` | Tested |
-| Linux | ELF | Tested |
+| Linux | `.elf` | Tested |
 | macOS | `.dmg` | Untested |
 
 ## Storage Recommendations
