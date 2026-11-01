@@ -36,8 +36,6 @@ A retro inspired lightweight NAS web application featuring a Windows 95 style in
 ## 📄 License
 Released under the PolyForm Noncommercial License 1.0.0. Commercial use is restricted by the license terms.
 
-Copyright © 2026 Nypr.
-
 ## ⚖️ Third-Party Trademarks
 
 Retro95 NAS is an **independent project** and **is not affiliated with, endorsed by, sponsored by, or officially connected to** Microsoft, Docker, Tailscale, OBS Studio, VideoLAN, or any other third-party companies or organizations mentioned within this project.
