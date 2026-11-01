@@ -17,6 +17,7 @@ A retro-inspired Network Attached Storage application featuring a classic Window
 
 - [Features](#features)
 - [System Requirements](#system-requirements)
+- [Platform Compatibility](#platform-compatibility)
 - [Storage Recommendations](#storage-recommendations)
 - [Compatibility](#compatibility)
 - [Installation](#installation)
@@ -63,6 +64,14 @@ A retro-inspired Network Attached Storage application featuring a classic Window
 | Python | 3.11+ where required | 3.15+ |
 
 > Python installation requirements depend on the platform installer. Windows users do not need to manually install Python when using the official installer.
+
+## Platform Compatibility
+
+| Platform | Package | Testing Status |
+|---|---|---|
+| Windows | `.exe` | Tested |
+| Linux | ELF | Tested |
+| macOS | `.dmg` | Untested |
 
 ## Storage Recommendations
 
