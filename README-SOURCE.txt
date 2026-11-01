@@ -1,4 +1,4 @@
-Win95 NAS 1.0 - source code
+Retro95 NAS 1.1 - source code
 ===========================
 
 This folder is the complete source of the app that the three installers
