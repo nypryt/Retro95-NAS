@@ -61,3 +61,7 @@ Despite similarities in naming, Retro95 NAS is a separate project with its own d
 Provided **"AS IS"**, without warranties to the maximum extent permitted by applicable law. Use at your own risk.
 
 Windows 95 is a trademark of Microsoft Corporation. This independent project is not affiliated with or endorsed by Microsoft.
+
+<p align="center">
+  <sub>Copyright © 2026 Nypr. All rights reserved.</sub>
+</p>
