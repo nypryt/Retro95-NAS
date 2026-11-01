@@ -9,7 +9,7 @@ A retro inspired lightweight NAS web application featuring a Windows 95 style in
 - 🔗 **Tailscale Management:** Manage Tailscale connectivity and perform actions such as connecting, disconnecting, checking device status, and pinging devices.
 - 🐳 **Docker Management:** Manage Docker containers through the NAS interface, including starting, stopping, and deleting containers.
 - 🌐 **Remote Administration:** Manage supported services through a browser-based interface.
-- 🪶 **Lightwight:** *Able to run this as low end as 1GB of ram and 32GB of storage
+- 🪶 **Lightweight:** *Able to run this as low end as 1GB of ram and 32GB of storage
 
 *Availability depends on the implemented functionality, permissions, and system configuration.*
 
