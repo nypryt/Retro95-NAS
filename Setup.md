@@ -57,7 +57,7 @@ A retro-inspired Network Attached Storage application featuring a classic Window
 | Operating System | Windows 10, macOS, Linux | Latest supported version |
 | Architecture | x86-64 | x86-64 |
 | CPU | Dual-core processor | Quad-core processor or better |
-| RAM | 2 GB | 8 GB or more |
+| RAM | 1 GB | 8 GB or more |
 | Application Storage | 20 MB free | 200 GB free |
 | NAS Storage | 1 GB free | 2 GB - 64 GB or more |
 | Network | Wi-Fi or Mobile Hotspot | Ethernet |
