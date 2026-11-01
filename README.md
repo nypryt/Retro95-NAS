@@ -37,7 +37,17 @@ A retro inspired lightweight NAS web application featuring a Windows 95 style in
 
 Refer to the repository's `LICENSE` file.
 
-## ⚖️ Disclaimer
+## ⚖️ Third-Party Trademarks
+
+Retro95 NAS is an **independent project** and **is not affiliated with, endorsed by, sponsored by, or officially connected to** Microsoft, Docker, Tailscale, OBS Studio, VideoLAN, or any other third-party companies or organizations mentioned within this project.
+
+All **third-party names, trademarks, logos, and product references** are the property of their respective owners.
+
+These names are used solely for **identification, descriptive, compatibility, or informational purposes.** Their appearance within Retro95 NAS does **not imply any partnership, sponsorship, or endorsement.**
+
+Retro95 NAS does **not claim ownership** of any third-party trademarks or intellectual property.
+
+## ⚠️ Disclaimer
 
 Provided **"AS IS"**, without warranties to the maximum extent permitted by applicable law. Use at your own risk.
 
