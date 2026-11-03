@@ -2,6 +2,8 @@
 
 A retro inspired lightweight NAS web application featuring a Windows 95 style interface, with centralized management for files, Tailscale, and Docker.
 
+## ⚠️ THIS PROJECT HAS BEEN DISCONTINUED DUE TO LEGAL TRADEMARK AND COPYRIGHT ISSUES
+
 ## ✨ Features
 
 - 🖥️ **Windows 95 Interface:** Classic desktop aesthetics and window-based navigation.
